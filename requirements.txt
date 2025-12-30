@@ -1,0 +1,39 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# VEILBREAKERS Monster Rigger - Requirements
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Core
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# Web UI
+gradio>=4.0.0
+
+# Image Processing
+opencv-python>=4.8.0
+
+# Inpainting - LaMa (easy install, highly recommended)
+simple-lama-inpainting>=0.1.2
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OPTIONAL - For AI-powered features
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# PyTorch (required for SAM 2 and Grounding DINO)
+# Install the appropriate version for your system from: https://pytorch.org/
+# Example for CUDA 11.8:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+
+# SAM 2 - State of the art segmentation
+# Install from: https://github.com/facebookresearch/sam2
+# git clone https://github.com/facebookresearch/sam2
+# cd sam2 && pip install -e .
+
+# Grounding DINO - Text-prompted object detection
+# pip install groundingdino-py
+# Or from source: https://github.com/IDEA-Research/GroundingDINO
+
+# Stable Diffusion Inpainting (optional, for "Ultra" quality)
+# diffusers>=0.24.0
+# transformers>=4.35.0
+# accelerate>=0.24.0

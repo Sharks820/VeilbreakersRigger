@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://rend"]
+
+[ext_resource type="Texture2D" uid="uid://head" path="res://monsters/rend/parts/head.png" id="1"]
+[ext_resource type="Script" path="res://monsters/rend/rend_rig.gd" id="2"]
+
+[node name="rend" type="Node2D"]
+script = ExtResource("2")
+
+[node name="head" type="Sprite2D" parent="."]
+texture = ExtResource("1")
+centered = false
+position = Vector2(824, 351)
+offset = Vector2(-125, -104)
+z_index = 0

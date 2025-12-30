@@ -1,0 +1,32 @@
+{
+  "name": "rend",
+  "template": "custom",
+  "parts": {
+    "head": {
+      "bbox": [
+        824,
+        351,
+        251,
+        209
+      ],
+      "pivot": [
+        125,
+        104
+      ],
+      "pivot_world": [
+        949,
+        455
+      ],
+      "z_index": 0,
+      "parent": "",
+      "children": [],
+      "confidence": 0.3747124969959259
+    }
+  },
+  "hierarchy": {},
+  "root_parts": [
+    "head"
+  ],
+  "generated_at": "2025-12-29T20:37:47.458287",
+  "generator": "VeilbreakersRigger v2.0"
+}
