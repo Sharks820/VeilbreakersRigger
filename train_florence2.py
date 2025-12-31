@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 # Training config
 TRAINING_DIR = Path(__file__).parent / "training_data"
 OUTPUT_DIR = Path(__file__).parent / "florence2_finetuned"
-MODEL_ID = "microsoft/Florence-2-large"
+# Florence-2 PRO (large-ft = pre-fine-tuned, better accuracy)
+MODEL_ID = "microsoft/Florence-2-large-ft"
 
 # Body parts we want to detect
 BODY_PARTS = [

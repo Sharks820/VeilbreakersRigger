@@ -577,8 +577,9 @@ class GroundedSAM2Engine(SegmentationEngine):
                 model_id = str(finetuned_path)
                 logger.info(f"🎯 Using FINE-TUNED Florence-2 from {model_id}")
             else:
-                model_id = "microsoft/Florence-2-large"
-                logger.info(f"Loading Florence-2 from {model_id}...")
+                # Use Florence-2 PRO (large-ft = fine-tuned, better accuracy)
+                model_id = "microsoft/Florence-2-large-ft"
+                logger.info(f"Loading Florence-2 PRO from {model_id}...")
 
             self._florence2_processor = AutoProcessor.from_pretrained(
                 model_id,

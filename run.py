@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""VEILBREAKERS Monster Rigger - Launcher"""
+"""VEILBREAKERS Monster Rigger - Launcher v4.0"""
 import sys
 
-print("=" * 50)
-print("    VEILBREAKERS MONSTER RIGGER v3.0")
-print("=" * 50)
+print("=" * 60)
+print("    VEILBREAKERS MONSTER RIGGER v4.0 (UNIFIED)")
+print("    Powered by Florence-2 PRO")
+print("=" * 60)
 print()
 
 # Check deps
@@ -27,12 +28,11 @@ for mod, name in [("sam2", "SAM2"), ("groundingdino", "GroundingDINO"), ("simple
         print(f"  [--] {name} (optional)")
 
 print()
-print("=" * 50)
-print("Launching UI...")
-print("=" * 50)
+print("=" * 60)
+print("Launching UNIFIED UI...")
+print("=" * 60)
 print()
 
-from working_ui import demo, init, preload_models
-init()
-preload_models()
-demo.launch(server_name="127.0.0.1")
+# Use the unified UI (all features combined)
+from veilbreakers_rigger_ui import launch_ui
+launch_ui()

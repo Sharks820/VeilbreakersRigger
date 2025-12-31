@@ -78,8 +78,8 @@ class Config:
     OUTPUT_DIR = BASE_DIR / "florence2_finetuned"
     CHECKPOINTS_DIR = OUTPUT_DIR / "checkpoints"
 
-    # Model
-    BASE_MODEL = "microsoft/Florence-2-large"
+    # Model - Florence-2 PRO (large fine-tuned = BEST accuracy)
+    BASE_MODEL = "microsoft/Florence-2-large-ft"  # PRO version with pre-fine-tuning
     TASK = "<CAPTION_TO_PHRASE_GROUNDING>"
 
     # Training hyperparameters (ULTRA-OPTIMIZED for speed + effectiveness)

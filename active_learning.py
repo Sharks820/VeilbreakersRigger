@@ -103,8 +103,9 @@ class ActiveLearner:
                 model_id = str(MODEL_DIR / "final")
                 print(f"Loading FINE-TUNED model from {model_id}")
             else:
-                model_id = "microsoft/Florence-2-large"
-                print(f"Loading base model: {model_id}")
+                # Use Florence-2 PRO (large-ft = better accuracy)
+                model_id = "microsoft/Florence-2-large-ft"
+                print(f"Loading Florence-2 PRO: {model_id}")
 
             self.processor = AutoProcessor.from_pretrained(
                 model_id, trust_remote_code=True
