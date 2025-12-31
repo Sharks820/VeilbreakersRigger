@@ -2729,29 +2729,9 @@ class VeilbreakersRigger:
         
         logger.info(f"Subtracted point at ({x}, {y})")
         return self.current_mask
-    
-    def box_segment(self, x1: int, y1: int, x2: int, y2: int) -> np.ndarray:
-        """
-        Segment within a bounding box
-        
-        Args:
-            x1, y1, x2, y2: Box coordinates
-            
-        Returns:
-            Binary mask
-        """
-        if self.current_rig is None:
-            raise ValueError("No image loaded")
-        
-        self._clear_selection()
-        
-        box = BoundingBox(x1, y1, x2, y2)
-        self.current_mask = self.segmenter.segment_box(box)
-        self.current_rig.current_mask = self.current_mask
-        
-        logger.info(f"Box segment: ({x1}, {y1}) to ({x2}, {y2})")
-        return self.current_mask
-    
+
+    # NOTE: box_segment is defined earlier in this class (line ~2604) with proper min/max coordinate handling
+
     def confirm_selection(self,
                           name: str,
                           z_index: int = 0,

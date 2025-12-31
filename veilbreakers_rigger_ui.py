@@ -433,7 +433,8 @@ def create_ui():
                         label="Monster Image (Upload or Drop Here)",
                         type="numpy",
                         height=550,
-                        interactive=True
+                        interactive=False,
+                        sources=["upload", "clipboard"]
                     )
 
                     with gr.Row():

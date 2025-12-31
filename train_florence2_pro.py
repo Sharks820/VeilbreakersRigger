@@ -46,6 +46,13 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model, TaskType, PeftModel
 
+# Training metrics tracking
+try:
+    from training_metrics import TrainingMetricsTracker
+    METRICS_AVAILABLE = True
+except ImportError:
+    METRICS_AVAILABLE = False
+
 # Data augmentation
 try:
     import albumentations as A
@@ -528,6 +535,16 @@ def train():
 ╚══════════════════════════════════════════════════════════════════╝
     """)
 
+    # Initialize metrics tracking
+    metrics_tracker = None
+    if METRICS_AVAILABLE:
+        metrics_tracker = TrainingMetricsTracker()
+        metrics_tracker.start_session(
+            num_samples=len(train_samples),
+            model_type="florence2-lora"
+        )
+        logger.info("📊 Training metrics tracking enabled")
+
     for epoch in range(1, Config.EPOCHS + 1):
         logger.info(f"\n{'='*60}\nEpoch {epoch}/{Config.EPOCHS}\n{'='*60}")
 
@@ -538,6 +555,10 @@ def train():
         val_loss = validate(model, val_loader, device)
 
         logger.info(f"Epoch {epoch} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+
+        # Log to metrics tracker
+        if metrics_tracker:
+            metrics_tracker.log_epoch(epoch, train_loss, val_loss)
 
         # Save best
         if val_loss < best_val_loss:
@@ -555,6 +576,12 @@ def train():
     final_dir = Config.OUTPUT_DIR / "final"
     model.save_pretrained(final_dir)
     processor.save_pretrained(final_dir)
+
+    # End metrics session
+    if metrics_tracker:
+        metrics_tracker.end_session(success=True)
+        summary = metrics_tracker.get_learning_summary()
+        logger.info(f"📊 Training tracked: {summary.get('message', 'Complete')}")
 
     print(f"""
 ╔══════════════════════════════════════════════════════════════════╗

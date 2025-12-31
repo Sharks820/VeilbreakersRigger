@@ -439,6 +439,7 @@ with gr.Blocks(title="VEILBREAKERS Rigger", theme=gr.themes.Soft()) as demo:
                 label="Monster Image (click to select parts)",
                 type="numpy",
                 height=512,
+                interactive=False,
                 sources=["upload", "clipboard"]
             )
             status = gr.Textbox(label="Status", interactive=False, lines=2)

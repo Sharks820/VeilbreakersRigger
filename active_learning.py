@@ -23,6 +23,17 @@ from datetime import datetime
 import shutil
 import torch
 
+# Training metrics
+try:
+    from training_metrics import TrainingMetricsTracker, generate_learning_report, get_model_status
+    METRICS_AVAILABLE = True
+except ImportError:
+    METRICS_AVAILABLE = False
+    def generate_learning_report():
+        return "Training metrics module not found. Run training to create it."
+    def get_model_status():
+        return {"finetuned_model_exists": False, "using_model": "base", "training_summary": {}}
+
 # Directories
 BASE_DIR = Path(__file__).parent
 TRAINING_DIR = BASE_DIR / "training_data"
@@ -101,7 +112,7 @@ class ActiveLearner:
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_id,
                 trust_remote_code=True,
-                dtype=torch.float32,
+                torch_dtype=torch.float32,
                 attn_implementation="eager"
             )
             self.model.eval()
@@ -342,16 +353,41 @@ with gr.Blocks(title="Active Learning - Train Florence-2") as demo:
     **Green boxes** = AI detected | **Red boxes** = Your corrections
     """)
 
-    with gr.Row():
-        training_status = gr.Textbox(value=get_training_status(), label="Training Data", interactive=False)
-        train_btn = gr.Button("🚀 TRAIN MODEL", variant="primary")
+    with gr.Tabs():
+        with gr.Tab("🎯 Training"):
+            with gr.Row():
+                training_status = gr.Textbox(value=get_training_status(), label="Training Data", interactive=False)
+                train_btn = gr.Button("🚀 TRAIN MODEL", variant="primary")
+
+        with gr.Tab("📊 Learning Verification"):
+            gr.Markdown("""
+            ### Is the AI Actually Learning?
+            This section proves the model is improving, not just placebo effect.
+            """)
+            learning_report = gr.Code(
+                value=generate_learning_report(),
+                label="Learning Report",
+                language=None,
+                lines=15
+            )
+            with gr.Row():
+                refresh_report_btn = gr.Button("🔄 Refresh Report")
+                model_status_box = gr.JSON(value=get_model_status(), label="Model Status")
+
+            refresh_report_btn.click(
+                fn=generate_learning_report,
+                outputs=[learning_report]
+            ).then(
+                fn=get_model_status,
+                outputs=[model_status_box]
+            )
 
     with gr.Row():
         with gr.Column(scale=2):
             image_input = gr.Image(label="Upload Monster Image", type="numpy")
             detect_btn = gr.Button("🔍 DETECT PARTS", variant="primary", size="lg")
 
-            image_output = gr.Image(label="Detection Result (Green=AI, Red=Your corrections)")
+            image_output = gr.Image(label="Detection Result (Green=AI, Red=Your corrections)", interactive=False)
             status = gr.Textbox(label="Status")
 
         with gr.Column(scale=1):

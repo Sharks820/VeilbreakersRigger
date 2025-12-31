@@ -92,7 +92,9 @@ with gr.Blocks(title="VEILBREAKERS Rigger") as demo:
             img = gr.Image(
                 label="Drop image here or click to upload",
                 type="numpy",
-                height=500
+                height=500,
+                interactive=False,
+                sources=["upload", "clipboard"]
             )
             status = gr.Textbox(label="Status", value="Upload an image to start")
             reset_btn = gr.Button("Reset")
