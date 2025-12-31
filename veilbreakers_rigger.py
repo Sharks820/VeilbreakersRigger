@@ -589,7 +589,7 @@ class GroundedSAM2Engine(SegmentationEngine):
             self._florence2 = AutoModelForCausalLM.from_pretrained(
                 model_id,
                 trust_remote_code=True,
-                dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
                 attn_implementation="eager"  # Use eager attention, not SDPA
             ).to(self.device)
 

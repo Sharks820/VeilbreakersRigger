@@ -313,9 +313,9 @@ def train_model():
         if len(data) < 5:
             return f"Need at least 5 corrections. You have {len(data)}. Keep correcting!"
 
-    # Run training script
+    # Run PRO training script (with metrics tracking, augmentation, early stopping)
     result = subprocess.run(
-        [sys.executable, str(BASE_DIR / "train_florence2.py")],
+        [sys.executable, str(BASE_DIR / "train_florence2_pro.py")],
         capture_output=True,
         text=True,
         cwd=str(BASE_DIR)
