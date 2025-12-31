@@ -1,0 +1,44 @@
+# AI Model Checkpoints (too large for GitHub)
+checkpoints/
+*.pth
+*.pt
+*.safetensors
+*.ckpt
+*.bin
+
+# Output folders (keep structure, ignore contents)
+output/*
+!output/.gitkeep
+exports/*
+!exports/.gitkeep
+generated/*
+!generated/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Training data (user-specific)
+training_data/
+florence2_finetuned/
