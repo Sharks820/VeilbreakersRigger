@@ -1,5 +1,6 @@
 # AI Model Checkpoints (too large for GitHub)
-checkpoints/
+checkpoints/*
+!checkpoints/README.md
 *.pth
 *.pt
 *.safetensors
