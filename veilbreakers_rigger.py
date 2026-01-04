@@ -390,9 +390,8 @@ class MonsterRig:
         if part.parent and part.parent in self.parts:
             if part.name not in self.parts[part.parent].children:
                 self.parts[part.parent].children.append(part.name)
-        elif not part.parent:
-            if part.name not in self.root_parts:
-                self.root_parts.append(part.name)
+        elif not part.parent and part.name not in self.root_parts:
+            self.root_parts.append(part.name)
     
     def get_part(self, name: str) -> Optional[BodyPart]:
         return self.parts.get(name)
