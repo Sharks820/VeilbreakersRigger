@@ -20,11 +20,33 @@ AI-powered monster rigging tool for game development. Automatically detects body
 |------|---------|
 | `run.py` | Main launcher |
 | `veilbreakers_rigger.py` | Core rigger class (124KB) |
-| `veilbreakers_rigger_ui.py` | Gradio UI |
+| `veilbreakers_rigger_ui.py` | Gradio UI with Animation tab |
 | `active_learning.py` | AI training UI with corrections |
 | `train_florence2_pro.py` | Florence-2 fine-tuning with LoRA |
 | `training_metrics.py` | Learning curve visualization |
+| `spine_rig_builder.py` | Spine rig generation with bones, IK, physics |
+| `animation_engine.py` | Core animation classes and generators |
+| `animation_templates.py` | Pre-built animations per archetype |
+| `animation_library.py` | Animation library management |
 | `LAUNCH_RIGGER.bat` | Windows launcher (uses venv312) |
+
+## Animation System
+The Animation tab in the UI generates complete Spine rigs with:
+- **Bone Hierarchy**: Proper parent-child relationships
+- **IK Constraints**: For arms, legs, tentacles
+- **Physics Constraints**: Hair, cape, tentacles with physics sim
+- **15-25 Animations**: Per creature archetype (idle, walk, attack, etc.)
+
+### Creature Archetypes
+- Humanoid, Multi Arm, Quadruped, Serpent, Skeleton
+- Floating, Giant, Insectoid, Winged, Aquatic, Eldritch, Custom
+
+### Key Integration
+The animation system uses parts detected by Florence-2 (or user-added) instead of re-detecting. User corrections are preserved:
+```python
+custom_parts = {part_name: {..., "confidence": 1.0} for part in detected_parts}
+builder.build(..., custom_parts=custom_parts)
+```
 
 ## Critical Fixes Applied
 
@@ -83,6 +105,7 @@ Old/test files moved to `archive/` instead of deleted.
 - Uses Windows 11
 
 ## Version History
+- v5.2: Animation system integrated into main UI
 - v5.1: Python 3.12 + CUDA setup, cleanup
 - v5.0: Body Part Detection Fix + Learning Enhancements
 - v4.0: Florence-2 PRO + Unified UI

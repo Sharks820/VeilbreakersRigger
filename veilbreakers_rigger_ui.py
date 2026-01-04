@@ -57,6 +57,19 @@ except Exception as e:
     RIGGER_AVAILABLE = False
     print(f"WARNING: Could not import VeilbreakersRigger: {e}")
 
+# Animation system
+ANIMATION_AVAILABLE = True
+try:
+    from spine_rig_builder import SpineRigBuilder, ARCHETYPE_CONFIGS, CreatureArchetype
+    from animation_templates import AnimationTemplates
+    ARCHETYPES = [a.name.lower().replace('_', ' ').title() for a in CreatureArchetype]
+    ARCHETYPE_MAP = {a.name.lower().replace('_', ' ').title(): a.name.lower() for a in CreatureArchetype}
+except Exception as e:
+    ANIMATION_AVAILABLE = False
+    ARCHETYPES = ["Humanoid", "Quadruped", "Winged", "Serpent", "Spider", "Eldritch", "Skeleton"]
+    ARCHETYPE_MAP = {a: a.lower() for a in ARCHETYPES}
+    print(f"WARNING: Could not import animation system: {e}")
+
 # =============================================================================
 # GLOBAL STATE
 # =============================================================================
@@ -698,6 +711,119 @@ def export_rig(monster_name: str, format_choice: str):
         return f"Export error: {str(e)}", None
 
 
+def generate_animated_rig(
+    rig_name: str,
+    archetype: str,
+    arm_count: int,
+    leg_count: int,
+    tentacle_count: int,
+    has_tail: bool,
+    has_wings: bool,
+    has_hair: bool,
+    has_cape: bool,
+    anim_speed: float
+):
+    """Generate a complete animated Spine rig from the current parts"""
+    if not ANIMATION_AVAILABLE:
+        return "Animation system not available. Check console for import errors.", None
+
+    if STATE.rigger is None:
+        return "No image loaded. Load an image first.", None
+
+    parts = STATE.rigger.get_parts()
+    if not parts:
+        return "No parts detected. Use Smart Detect or add parts manually first.", None
+
+    if not rig_name:
+        rig_name = "monster"
+
+    try:
+        # Save current image temporarily
+        temp_dir = tempfile.mkdtemp()
+        temp_image = os.path.join(temp_dir, f"{rig_name}.png")
+
+        # Get original image from rigger
+        if STATE.rigger.current_image is not None:
+            Image.fromarray(STATE.rigger.current_image).save(temp_image)
+        else:
+            return "No image available in rigger.", None
+
+        # Convert detected parts to custom_parts format for SpineRigBuilder
+        # This passes the USER-CONFIRMED parts instead of re-detecting!
+        custom_parts = {}
+        for part_name, part in parts.items():
+            if part.image is not None:
+                # Calculate bounding box from part position
+                bbox = None
+                if hasattr(part, 'bbox') and part.bbox:
+                    bbox = part.bbox
+                elif part.image is not None:
+                    # Estimate bbox from image size and pivot
+                    h, w = part.image.shape[:2] if len(part.image.shape) >= 2 else (100, 100)
+                    px, py = part.pivot if part.pivot else (w//2, h//2)
+                    bbox = (0, 0, w, h)
+
+                custom_parts[part_name] = {
+                    "bbox": bbox,
+                    "pivot": part.pivot if part.pivot else (50, 50),
+                    "center": part.pivot if part.pivot else (50, 50),
+                    "z_index": part.z_index,
+                    "parent": part.parent,
+                    "confidence": 1.0  # User confirmed = 100% confident
+                }
+
+        # Build the animated rig
+        builder = SpineRigBuilder(output_dir=temp_dir)
+
+        # Convert display name to archetype value
+        archetype_value = ARCHETYPE_MAP.get(archetype, archetype.lower())
+
+        output_path = builder.build(
+            image_path=temp_image,
+            name=rig_name,
+            archetype=archetype_value,
+            arm_count=int(arm_count),
+            leg_count=int(leg_count),
+            has_tail=has_tail,
+            has_wings=has_wings,
+            has_hair=has_hair,
+            has_cape=has_cape,
+            tentacle_count=int(tentacle_count),
+            custom_parts=custom_parts,  # Pass user-confirmed parts!
+            animation_speed=anim_speed
+        )
+
+        # Get animation count
+        try:
+            with open(output_path, 'r') as f:
+                spine_data = json.load(f)
+            anim_count = len(spine_data.get('animations', {}))
+            bone_count = len(spine_data.get('bones', []))
+        except:
+            anim_count = 0
+            bone_count = 0
+
+        status = f"""Animated rig generated successfully!
+
+Rig: {rig_name}
+Archetype: {archetype}
+Bones: {bone_count}
+Animations: {anim_count}
+Output: {output_path}
+
+Features:
+- Arms: {int(arm_count)} | Legs: {int(leg_count)} | Tentacles: {int(tentacle_count)}
+- Tail: {'Yes' if has_tail else 'No'} | Wings: {'Yes' if has_wings else 'No'}
+- Hair: {'Yes' if has_hair else 'No'} | Cape: {'Yes' if has_cape else 'No'}
+- Speed: {anim_speed}x"""
+
+        return status, output_path
+
+    except Exception as e:
+        import traceback
+        return f"Animation generation error: {str(e)}\n\n{traceback.format_exc()}", None
+
+
 # =============================================================================
 # ACTIVE LEARNING FUNCTIONS
 # =============================================================================
@@ -998,6 +1124,34 @@ def create_ui():
                     export_status = gr.Textbox(label="Export Status", interactive=False)
                     download_file = gr.File(label="Download")
 
+                with gr.Tab("Animation"):
+                    gr.Markdown("### Generate Animated Rig")
+                    gr.Markdown("Creates a complete Spine rig with bones, IK, physics, and animations.")
+
+                    anim_name = gr.Textbox(label="Rig Name", placeholder="my_monster")
+                    archetype_dropdown = gr.Dropdown(
+                        choices=ARCHETYPES,
+                        value="humanoid",
+                        label="Creature Archetype"
+                    )
+
+                    with gr.Row():
+                        arm_count = gr.Slider(minimum=0, maximum=8, value=2, step=1, label="Arms")
+                        leg_count = gr.Slider(minimum=0, maximum=8, value=2, step=1, label="Legs")
+                        tentacle_count = gr.Slider(minimum=0, maximum=12, value=0, step=1, label="Tentacles")
+
+                    with gr.Row():
+                        has_tail = gr.Checkbox(label="Has Tail", value=False)
+                        has_wings = gr.Checkbox(label="Has Wings", value=False)
+                        has_hair = gr.Checkbox(label="Has Hair/Mane", value=False)
+                        has_cape = gr.Checkbox(label="Has Cape/Cloak", value=False)
+
+                    anim_speed = gr.Slider(minimum=0.25, maximum=2.0, value=1.0, step=0.25, label="Animation Speed")
+
+                    generate_anim_btn = gr.Button("Generate Animated Rig", variant="primary")
+                    anim_status = gr.Textbox(label="Animation Status", interactive=False, lines=5)
+                    anim_download = gr.File(label="Download Spine JSON")
+
                 with gr.Tab("Parts List"):
                     parts_table = gr.Dataframe(
                         headers=["Name", "Z-Index", "Parent"],
@@ -1123,6 +1277,14 @@ def create_ui():
         refresh_report_btn.click(
             fn=lambda: generate_learning_report() if LEARNING_AVAILABLE else "Learning metrics not available",
             outputs=[learning_report]
+        )
+
+        # Animation
+        generate_anim_btn.click(
+            fn=generate_animated_rig,
+            inputs=[anim_name, archetype_dropdown, arm_count, leg_count, tentacle_count,
+                    has_tail, has_wings, has_hair, has_cape, anim_speed],
+            outputs=[anim_status, anim_download]
         )
 
         # Load preset info on app load
