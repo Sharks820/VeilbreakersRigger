@@ -280,7 +280,8 @@ def load_image(image, sam_size: str):
 def on_image_click(image, evt: gr.SelectData, mode: str, box_mode: bool):
     """Handle click on image - supports regular click and box mode"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, MSG_LOAD_IMAGE_FIRST
+        # Return the image unchanged instead of None
+        return image, MSG_LOAD_IMAGE_FIRST
 
     x, y = evt.index
 
@@ -337,7 +338,7 @@ def smart_detect_parts(image, prompt: str, threshold: float):
     No prompt required! Florence-2 finds AND locates all parts automatically.
     """
     if image is None:
-        return None, "Upload and load an image first", [], gr.update(choices=[""])
+        return image, "Upload and load an image first", [], gr.update(choices=[""])
 
     if STATE.rigger is None or STATE.rigger.current_rig is None:
         return image, "Click 'Load Image' first", [], gr.update(choices=[""])
@@ -396,10 +397,10 @@ def smart_detect_parts(image, prompt: str, threshold: float):
 def auto_detect(prompt: str, box_thresh: float, text_thresh: float, quality: str):
     """Auto-detect parts from text prompt (Grounding DINO)"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, MSG_LOAD_IMAGE_FIRST, [], gr.update(choices=[""])
+        return create_visualization(show_mask=False), MSG_LOAD_IMAGE_FIRST, [], gr.update(choices=[""])
 
     if not prompt:
-        return None, "Enter a detection prompt!", [], gr.update(choices=[""])
+        return create_visualization(show_mask=False), "Enter a detection prompt!", [], gr.update(choices=[""])
 
     quality_map = {
         "Fast (OpenCV)": InpaintQuality.FAST,
@@ -439,13 +440,13 @@ def auto_detect(prompt: str, box_thresh: float, text_thresh: float, quality: str
 def redetect_single_part(part_prompt: str, threshold: float):
     """Re-detect a single part with custom settings"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, MSG_LOAD_IMAGE_FIRST
+        return create_visualization(show_mask=False), MSG_LOAD_IMAGE_FIRST
 
     if not STATE.models_loaded:
-        return None, "AI models still loading..."
+        return create_visualization(show_mask=False), "AI models still loading..."
 
     if not part_prompt or not part_prompt.strip():
-        return None, "Enter a single part name like 'head' or 'arm'"
+        return create_visualization(show_mask=False), "Enter a single part name like 'head' or 'arm'"
 
     try:
         print(f"Re-detecting: {part_prompt} (threshold={threshold})")
@@ -460,7 +461,7 @@ def redetect_single_part(part_prompt: str, threshold: float):
         )
 
         if not detections:
-            return None, f"'{part_prompt}' not detected. Try lower threshold or different term."
+            return create_visualization(show_mask=False), f"'{part_prompt}' not detected. Try lower threshold or different term."
 
         # Take the best detection
         name, mask, confidence = detections[0]
@@ -479,7 +480,7 @@ def redetect_single_part(part_prompt: str, threshold: float):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return None, f"Re-detect error: {str(e)}"
+        return create_visualization(show_mask=False), f"Re-detect error: {str(e)}"
 
 
 # =============================================================================
@@ -498,7 +499,8 @@ def segment_everything():
         STATE.current_segment_index = 0
 
         if STATE.segment_count == 0:
-            return None, "No segments found. Try clicking directly on the image.", 0, 0
+            # Keep current visualization instead of returning None
+            return create_visualization(show_mask=False), "No segments found. Try clicking directly on the image.", 0, 0
 
         # Show first segment
         vis = STATE.rigger.get_segment_preview(0)
@@ -508,7 +510,7 @@ def segment_everything():
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return None, f"Segmentation error: {str(e)}", 0, 0
+        return create_visualization(show_mask=False), f"Segmentation error: {str(e)}", 0, 0
 
 
 def show_segment(index: int):
@@ -517,7 +519,7 @@ def show_segment(index: int):
         return None, "No image loaded", 0
 
     if STATE.segment_count == 0:
-        return None, "Run 'Find All Segments' first", 0
+        return create_visualization(show_mask=False), "Run 'Find All Segments' first", 0
 
     # Clamp index
     index = max(0, min(int(index), STATE.segment_count - 1))
@@ -599,10 +601,10 @@ def auto_save_training_data(image: np.ndarray, part_name: str, bbox: list):
 def add_part(name: str, z_index: int, parent: str, pivot: str, quality: str):
     """Add current selection as a part - AUTO-SAVES to training data"""
     if STATE.rigger is None or STATE.rigger.current_mask is None:
-        return None, "Select a region first!", [], gr.update(choices=[""])
+        return create_visualization(show_mask=False), "Select a region first!", [], gr.update(choices=[""])
 
     if not name:
-        return None, "Enter a part name!", [], gr.update(choices=[""])
+        return create_visualization(show_mask=False), "Enter a part name!", [], gr.update(choices=[""])
 
     quality_map = {
         "Fast (OpenCV)": InpaintQuality.FAST,
@@ -674,7 +676,7 @@ def undo_action():
     result = STATE.undo()
     if result is not None:
         return result, "Undo"
-    return None, "Nothing to undo"
+    return create_visualization(show_mask=False), "Nothing to undo"
 
 
 def redo_action():
@@ -682,7 +684,7 @@ def redo_action():
     result = STATE.redo()
     if result is not None:
         return result, "Redo"
-    return None, "Nothing to redo"
+    return create_visualization(show_mask=False), "Nothing to redo"
 
 
 def get_preset_info(preset_name: str) -> str:
@@ -699,7 +701,7 @@ def get_preset_info(preset_name: str) -> str:
 def apply_preset(preset_name: str, quality: str):
     """Apply a body preset"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, MSG_LOAD_IMAGE_FIRST, [], gr.update(choices=[""])
+        return create_visualization(show_mask=False), MSG_LOAD_IMAGE_FIRST, [], gr.update(choices=[""])
 
     quality_map = {
         "Fast (OpenCV)": InpaintQuality.FAST,
@@ -729,7 +731,7 @@ def apply_preset(preset_name: str, quality: str):
 def update_part(name: str, z_index: int, parent: str, pivot: str):
     """Update a part's properties"""
     if STATE.rigger is None or not name:
-        return None, "Select a part to edit", []
+        return create_visualization(show_mask=False), "Select a part to edit", []
 
     pivot_map = {
         "Center": "center", "Top Center": "top_center", "Bottom Center": "bottom_center",
@@ -758,7 +760,7 @@ def update_part(name: str, z_index: int, parent: str, pivot: str):
 def remove_part(name: str):
     """Remove a part"""
     if STATE.rigger is None or not name:
-        return None, "Select a part to remove", [], gr.update(choices=[""])
+        return create_visualization(show_mask=False), "Select a part to remove", [], gr.update(choices=[""])
 
     try:
         STATE.rigger.remove_part(name)
