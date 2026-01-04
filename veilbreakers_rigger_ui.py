@@ -413,7 +413,7 @@ def clear_all():
 
 
 def get_archetype_preview(archetype: str) -> str:
-    """Show what animations will be generated for this archetype"""
+    """Show ALL animations that will be generated for this archetype"""
     if not ANIMATION_AVAILABLE:
         return "Animation system not loaded"
 
@@ -426,25 +426,21 @@ def get_archetype_preview(archetype: str) -> str:
         anims = config.get("animations", [])
 
         if not anims:
-            return f"**{archetype}**: Default animations (idle, walk, attack)"
+            return f"idle, walk, run, attack, hurt, die"
 
-        # Group animations by type
-        lines = [f"**{archetype} Animations ({len(anims)} total):**"]
+        # Show ALL animations in a readable format
+        # Group them for clarity
+        lines = []
 
-        # Categorize
-        idles = [a for a in anims if 'idle' in a.lower()]
-        walks = [a for a in anims if 'walk' in a.lower() or 'run' in a.lower() or 'move' in a.lower()]
-        attacks = [a for a in anims if 'attack' in a.lower() or 'strike' in a.lower() or 'bite' in a.lower()]
-        others = [a for a in anims if a not in idles + walks + attacks]
-
-        if idles: lines.append(f"• Idle: {', '.join(idles[:3])}{'...' if len(idles) > 3 else ''}")
-        if walks: lines.append(f"• Movement: {', '.join(walks[:3])}{'...' if len(walks) > 3 else ''}")
-        if attacks: lines.append(f"• Combat: {', '.join(attacks[:3])}{'...' if len(attacks) > 3 else ''}")
-        if others: lines.append(f"• Special: {', '.join(others[:3])}{'...' if len(others) > 3 else ''}")
+        # Just list them all, comma separated
+        anim_list = ", ".join(anims)
+        lines.append(f"{anim_list}")
+        lines.append(f"")
+        lines.append(f"**Total: {len(anims)} animations**")
 
         return "\n".join(lines)
     except Exception as e:
-        return f"**{archetype}**: Standard monster animations"
+        return f"idle, walk, run, attack, hurt, die"
 
 
 # =============================================================================
@@ -509,17 +505,18 @@ def create_ui():
 
                 # RIG & ANIMATE - Make it OBVIOUS this is where the magic happens
                 gr.Markdown("## 🦴 RIG & ANIMATE")
-                gr.Markdown("*This builds the skeleton + generates all animations!*")
+                gr.Markdown("**Pick creature type → Get ALL animations for that type!**")
 
                 monster_name = gr.Textbox(label="Monster Name", placeholder="my_monster")
                 archetype = gr.Dropdown(
                     choices=ARCHETYPES,
                     value=ARCHETYPES[0] if ARCHETYPES else "Humanoid",
-                    label="Creature Type (determines animations)"
+                    label="Creature Type"
                 )
 
                 # Show what animations will be generated
-                anim_preview = gr.Markdown("*Select creature type to see animations*")
+                gr.Markdown("**Animations you'll get:**")
+                anim_preview = gr.Markdown("*Select creature type above*")
 
                 export_btn = gr.Button("🎬 BUILD RIG + ANIMATIONS", variant="primary", size="lg")
                 export_status = gr.Textbox(label="Build Status", interactive=False, lines=3)
