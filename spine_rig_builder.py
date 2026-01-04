@@ -73,12 +73,28 @@ ARCHETYPE_CONFIGS = {
         "expected_parts": ["head", "torso", "arm_left", "arm_right", "leg_left", "leg_right"],
         "optional_parts": ["hair", "cape", "weapon", "shield", "tail", "wings"],
         "animations": [
-            "idle_breathe", "idle_combat", "walk", "run",
-            "attack_slash", "attack_thrust", "attack_overhead",
-            "hit_light", "hit_heavy",
-            "death_fall_forward", "death_fall_backward",
-            "special_charge", "special_release",
-            "spawn", "victory", "taunt"
+            # Idle states
+            "idle_breathe", "idle_combat", "idle",
+            # Movement
+            "walk", "run",
+            # Basic attacks (matches game skill IDs)
+            "attack_basic", "attack_slash", "attack_thrust", "attack_overhead",
+            "rending_strike", "shield_bash", "execute",
+            # Hit reactions
+            "hit_light", "hit_heavy", "hit",
+            # Death
+            "death_fall_forward", "death_fall_backward", "death",
+            # Special abilities
+            "special_charge", "special_release", "frenzy", "apex_fury",
+            # Defensive (matches game)
+            "defend", "fortress_stance", "iron_wall", "cover_ally",
+            # Utility
+            "spawn", "victory", "taunt",
+            # RPG cast actions (matches game skill types)
+            "cast_heal", "siphon_heal", "life_tap", "essence_transfer",
+            "cast_buff", "last_bastion",
+            "cast_debuff", "fear_touch", "nightmare",
+            "block", "dodge", "channel"
         ],
         "bone_config": {
             "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
@@ -102,7 +118,9 @@ ARCHETYPE_CONFIGS = {
             "hit_light", "hit_heavy",
             "death_fall_forward", "death_collapse",
             "special_charge", "special_frenzy",
-            "spawn", "taunt"
+            "spawn", "taunt",
+            # RPG actions
+            "cast_heal", "cast_buff", "cast_debuff", "channel"
         ],
         "bone_config": {
             "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
@@ -183,7 +201,7 @@ ARCHETYPE_CONFIGS = {
         "name": "Floating/Spectral",
         "description": "Floating creatures (ghosts, beholders, wisps)",
         "expected_parts": ["main_body"],
-        "optional_parts": ["eye", "tentacle", "aura", "trail"],
+        "optional_parts": ["eye", "tentacle", "aura", "trail", "jaw", "horn"],
         "ethereal_trails": 4,  # Number of flowing trails
         "animations": [
             "idle_float", "idle_menace", "drift",
@@ -191,7 +209,9 @@ ARCHETYPE_CONFIGS = {
             "hit_light",
             "death_dissolve", "death_explode",
             "special_phase", "special_charge",
-            "spawn"
+            "spawn", "taunt",
+            # RPG actions
+            "cast_heal", "cast_buff", "cast_debuff", "channel"
         ],
         "bone_config": {
             "main_body": {"type": PartType.FLOATING, "parent": "root"},
@@ -269,20 +289,37 @@ ARCHETYPE_CONFIGS = {
     
     CreatureArchetype.ELDRITCH: {
         "name": "Eldritch/Cosmic Horror",
-        "description": "Lovecraftian horrors with many appendages",
+        "description": "Lovecraftian horrors with many appendages (The Congregation, The Weeping)",
         "expected_parts": ["main_body"],
         "tentacle_count": 8,
-        "optional_parts": ["eye", "mouth", "wing"],
+        "optional_parts": ["eye", "mouth", "wing", "head", "arm", "tentacle", "mass", "core", "jaw", "face_mass"],
         "animations": [
-            "idle_writhe", "idle_pulse",
-            "attack_grab", "attack_flurry", "attack_beam",
-            "hit_light",
-            "death_dissolve",
-            "special_phase", "special_summon",
-            "spawn"
+            # Idle states - writhing/pulsing
+            "idle_writhe", "idle_pulse", "idle_menace", "idle",
+            # Movement - floating/slithering
+            "drift", "hover", "slither",
+            # Attacks (matches game monster skills)
+            "attack_grab", "attack_flurry", "attack_beam", "attack_slam",
+            "collective_scream", "scream", "chorus", "chorus_of_names",
+            "consume_the_weak", "assimilate", "absorb",
+            "dread_gaze", "mass_confusion", "mass_drain",
+            # Hit reactions
+            "hit_light", "hit_heavy", "hit",
+            # Death
+            "death_dissolve", "death_explode", "death",
+            # Special abilities
+            "special_phase", "special_summon", "special_transform",
+            "reality_shatter", "between_seconds",
+            # Utility
+            "spawn", "taunt",
+            # RPG actions
+            "cast_heal", "absorb_pain", "absorb_suffering",
+            "cast_buff", "defined_purpose",
+            "cast_debuff", "drown_in_despair", "nightmare",
+            "channel"
         ],
         "bone_config": {
-            "main_body": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "main_body": {"type": PartType.SOFT_TENTACLE, "parent": "root"},  # Writhing mass
         }
     },
     

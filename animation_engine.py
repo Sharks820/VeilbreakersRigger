@@ -283,7 +283,16 @@ PART_CLASSIFICATION = {
     "whip": PartType.SOFT_CHAIN,
     "tether": PartType.SOFT_CHAIN,
     "leash": PartType.SOFT_CHAIN,
-    
+    "shackle": PartType.SOFT_CHAIN,
+
+    # Soft - Drip/Goo (uses chain physics - gravity + swing)
+    "drip": PartType.SOFT_CHAIN,
+    "drips": PartType.SOFT_CHAIN,
+    "goo": PartType.SOFT_CHAIN,
+    "slime": PartType.SOFT_CHAIN,
+    "ooze": PartType.SOFT_CHAIN,
+    "droplet": PartType.SOFT_CHAIN,
+
     # Floating
     "orb": PartType.FLOATING,
     "eye": PartType.FLOATING,

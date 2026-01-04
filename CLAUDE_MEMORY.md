@@ -104,7 +104,23 @@ Old/test files moved to `archive/` instead of deleted.
 - Has 8GB VRAM budget - optimize accordingly
 - Uses Windows 11
 
+## Veilbreakers Monster Coverage
+
+| Monster | Archetype | Animations |
+|---------|-----------|------------|
+| The Congregation | ELDRITCH | 43 |
+| The Broodmother | INSECTOID | 11 |
+| The Weeping | ELDRITCH | 43 |
+| The Bulwark | GIANT | 12 |
+| The Vessel | FLOATING | 17 |
+| Chainbound | HUMANOID | 41 |
+| Mawling | FLOATING | 17 |
+| Sporecaller | QUADRUPED | 14 |
+| Needlefang | SERPENT | 13 |
+| Ravener | HUMANOID | 41 |
+
 ## Version History
+- v5.3: Veilbreakers monster support + game animation IDs (169 body parts, 213 total animations)
 - v5.2: Animation system integrated into main UI
 - v5.1: Python 3.12 + CUDA setup, cleanup
 - v5.0: Body Part Detection Fix + Learning Enhancements

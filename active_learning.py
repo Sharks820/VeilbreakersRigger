@@ -54,24 +54,41 @@ MODEL_DIR = BASE_DIR / "florence2_finetuned"
 # Body parts - STRICT LIST for detection
 # These are the ONLY labels we want the AI to learn
 BODY_PARTS = [
-    # Head/face
-    "head", "skull", "face", "eye", "eyes", "mouth", "jaw", "teeth", "fangs",
-    "tongue", "nose", "snout", "ear", "ears", "horn", "horns", "antler",
+    # Head/face - DETAILED
+    "head", "skull", "face", "eye", "eyes", "mouth", "jaw", "teeth", "fangs", "fang",
+    "tongue", "nose", "snout", "muzzle", "beak", "ear", "ears", "horn", "horns",
+    "antler", "antlers", "tusk", "tusks", "whisker", "whiskers", "crest", "frills",
     # Upper body
-    "neck", "throat", "chest", "torso", "body", "stomach", "belly", "back",
-    # Arms & hands (ALL variations)
+    "neck", "throat", "chest", "torso", "body", "stomach", "belly", "back", "ribcage",
+    # Arms & hands (ALL variations with directions)
     "shoulder", "arm", "arms", "forearm", "elbow", "wrist",
+    "left_arm", "right_arm", "upper_arm", "lower_arm",
     "hand", "hands", "finger", "fingers", "fist", "palm",
-    "claw", "claws", "talon", "paw", "paws",
-    # Legs & feet (ALL variations)
+    "claw", "claws", "talon", "talons", "paw", "paws",
+    # Legs & feet (ALL variations with directions)
     "hip", "leg", "legs", "thigh", "knee", "ankle", "shin",
+    "left_leg", "right_leg", "front_leg", "back_leg", "hind_leg",
     "foot", "feet", "toe", "toes", "hoof", "hooves",
-    # Extras
-    "tail", "tentacle", "tentacles", "wing", "wings", "fin",
-    # Appearance
-    "fur", "hair", "mane", "beard", "scales", "shell", "carapace", "skin",
-    # Equipment
-    "weapon", "sword", "axe", "staff", "shield", "armor", "helmet", "cape", "gauntlet"
+    # Monster extras
+    "tail", "tentacle", "tentacles", "wing", "wings", "left_wing", "right_wing",
+    "fin", "fins", "dorsal_fin", "spike", "spikes", "spine", "spines", "barb", "barbs",
+    # Insect parts
+    "thorax", "abdomen", "mandible", "mandibles", "stinger", "antenna", "antennae",
+    "pincer", "pincers", "segment", "segments",
+    # Eldritch/blob parts - for The Congregation, The Weeping, etc
+    "tendril", "tendrils", "pseudopod", "core", "orb", "crystal", "halo", "aura",
+    "drip", "drips", "goo", "slime", "ooze", "mass", "blob", "growth",
+    "eyestalk", "eyestalks", "face_mass", "body_mass", "writhing_mass",
+    # Chain/binding (for Chainbound etc)
+    "chain", "chains", "shackle", "shackles", "lock", "padlock", "binding",
+    # Growths (for Sporecaller etc)
+    "mushroom", "mushrooms", "fungus", "tumor", "polyp", "spore", "spores",
+    # Appearance/coverings
+    "fur", "hair", "mane", "beard", "scales", "shell", "carapace", "skin", "hide",
+    "feathers", "plating", "armor_plate", "exoskeleton",
+    # Equipment/weapons
+    "weapon", "sword", "axe", "staff", "shield", "armor", "helmet", "cape", "gauntlet",
+    "mace", "hammer", "spear", "bow", "dagger", "scythe", "cloak", "robe", "hood"
 ]
 
 # Mapping from generic descriptions to body parts
@@ -80,15 +97,47 @@ LABEL_MAPPING = {
     # Direct mappings for common full-object detections
     "cat": "body", "dog": "body", "monster": "body", "creature": "body",
     "animal": "body", "character": "body", "figure": "body", "person": "body",
-    "dragon": "body", "beast": "body", "demon": "body",
-    # Body part synonyms
+    "dragon": "body", "beast": "body", "demon": "body", "blob": "body",
+    "entity": "body", "thing": "body",
+    # Head/face synonyms - IMPORTANT to differentiate
     "face": "head", "skull": "head", "cranium": "head",
-    "torso": "body", "trunk": "body", "chest": "body",
-    "limb": "leg", "appendage": "arm", "extremity": "leg",
+    "muzzle": "snout", "nose": "snout", "beak": "mouth",
+    "ear": "ear", "ears": "ear",  # Keep ears separate from horns
+    "horn": "horn", "horns": "horn",  # Keep horns separate from ears
+    "antler": "antler", "antlers": "antler",
+    "tusk": "tusk", "tusks": "tusk", "fang": "fang", "fangs": "fang",
+    # Body synonyms
+    "torso": "torso", "trunk": "body", "chest": "torso",
+    "ribcage": "chest", "abdomen": "belly",
+    # Limb synonyms
+    "limb": "arm", "appendage": "arm", "extremity": "leg",
+    "foreleg": "front_leg", "hindleg": "back_leg", "hind_leg": "back_leg",
+    # Hands/feet
     "claw": "claw", "talon": "claw", "nail": "claw",
     "paw": "paw", "foot": "foot", "hoof": "hoof",
-    "wing": "wing", "fin": "fin", "flipper": "fin",
-    "tail": "tail", "tentacle": "tentacle",
+    # Wings/fins
+    "wing": "wing", "fin": "fin", "flipper": "fin", "pinion": "wing",
+    # Tails/tentacles
+    "tail": "tail", "tentacle": "tentacle", "tendril": "tentacle",
+    "pseudopod": "tentacle", "appendage": "tentacle",
+    # Monster-specific mappings
+    "spike": "spike", "thorn": "spike", "barb": "spike", "quill": "spike",
+    "chain": "chain", "shackle": "chain", "link": "chain", "binding": "chain",
+    "core": "core", "orb": "core", "crystal": "core", "gem": "core", "heart": "core",
+    "halo": "halo", "aura": "aura", "glow": "aura",
+    "drip": "drip", "goo": "drip", "slime": "drip", "ooze": "drip", "droplet": "drip",
+    "mushroom": "mushroom", "fungus": "mushroom", "toadstool": "mushroom", "spore": "spore",
+    # Eldritch parts (for The Congregation, The Weeping)
+    "mass": "mass", "blob": "mass", "growth": "mass",
+    "eyestalk": "eyestalk", "eye_stalk": "eyestalk",
+    "face_mass": "face_mass", "body_mass": "body_mass", "writhing": "mass",
+    # Insect parts
+    "thorax": "thorax", "segment": "thorax",
+    "mandible": "mandible", "pincer": "mandible", "stinger": "stinger",
+    "antenna": "antenna", "feeler": "antenna", "antennae": "antenna",
+    # Equipment
+    "cloak": "cape", "robe": "cape", "cloth": "cape",
+    "blade": "sword", "hammer": "mace", "club": "mace",
 }
 
 
