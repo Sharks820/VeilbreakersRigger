@@ -281,24 +281,33 @@ BODY_PARTS = [
     'back', 'spine', 'backbone', 'vertebra', 'vertebrae',
     'shoulder', 'shoulders', 'collarbone', 'clavicle',
 
-    # === ARMS & HANDS ===
-    'arm', 'arms', 'upper arm', 'forearm', 'bicep', 'tricep',
-    'elbow', 'elbows', 'wrist', 'wrists',
-    'hand', 'hands', 'palm', 'palms', 'fist', 'fists',
+    # === ARMS & HANDS === (longer terms FIRST for better matching)
+    'left arm', 'right arm', 'left upper arm', 'right upper arm',
+    'left forearm', 'right forearm', 'upper arm', 'forearm',
+    'arm', 'arms', 'bicep', 'tricep',
+    'left elbow', 'right elbow', 'elbow', 'elbows',
+    'left wrist', 'right wrist', 'wrist', 'wrists',
+    'left hand', 'right hand', 'hand', 'hands', 'palm', 'palms', 'fist', 'fists',
+    'left claw', 'right claw', 'claw', 'claws',
     'finger', 'fingers', 'thumb', 'thumbs', 'knuckle', 'knuckles',
-    'claw', 'claws', 'talon', 'talons', 'nail', 'nails',
+    'talon', 'talons', 'nail', 'nails',
     'pincer', 'pincers', 'gripper', 'grippers',
 
-    # === LEGS & FEET ===
+    # === LEGS & FEET === (longer terms FIRST for better matching)
+    'left leg', 'right leg', 'left thigh', 'right thigh',
+    'left shin', 'right shin', 'lower leg',
     'leg', 'legs', 'thigh', 'thighs', 'shin', 'shins', 'calf', 'calves',
-    'knee', 'knees', 'kneecap', 'ankle', 'ankles',
+    'left knee', 'right knee', 'knee', 'knees', 'kneecap',
+    'left ankle', 'right ankle', 'ankle', 'ankles',
+    'left foot', 'right foot', 'left paw', 'right paw',
     'foot', 'feet', 'sole', 'soles', 'heel', 'heels',
     'toe', 'toes', 'hoof', 'hooves', 'paw', 'paws', 'pad', 'pads',
     'spur', 'spurs', 'dewclaw',
 
-    # === WINGS ===
-    'wing', 'wings', 'winglet', 'wingtip', 'wingspan',
-    'membrane', 'wing membrane', 'patagium',
+    # === WINGS === (longer terms FIRST for better matching)
+    'left wing', 'right wing', 'wing', 'wings',
+    'winglet', 'wingtip', 'wingspan',
+    'wing membrane', 'membrane', 'patagium',
     'feather', 'feathers', 'plume', 'plumes', 'quill', 'quills',
     'primary', 'primaries', 'secondary', 'secondaries', 'covert', 'coverts',
 
@@ -957,8 +966,8 @@ class GroundedSAM2Engine(SegmentationEngine):
         return results
 
     def auto_detect(self, text_prompt: str,
-                    box_threshold: float = 0.25,
-                    text_threshold: float = 0.25) -> List[Tuple[str, np.ndarray, float]]:
+                    box_threshold: float = 0.15,
+                    text_threshold: float = 0.15) -> List[Tuple[str, np.ndarray, float]]:
         """
         Auto-detect and segment parts from text prompt
         
@@ -1048,7 +1057,7 @@ class GroundedSAM2Engine(SegmentationEngine):
         return results
 
     def auto_detect_florence(self,
-                              box_threshold: float = 0.3) -> List[Tuple[str, np.ndarray, float]]:
+                              box_threshold: float = 0.15) -> List[Tuple[str, np.ndarray, float]]:
         """
         PRIMARY DETECTION - Uses Florence-2 for detection AND localization.
 
@@ -1098,23 +1107,27 @@ class GroundedSAM2Engine(SegmentationEngine):
         self._sam_predictor.set_image(np_image)
 
         # Use CAPTION_TO_PHRASE_GROUNDING - tell Florence-2 what body parts to find
-        # COMPLETE body parts list - includes all variations for learning
+        # OPTIMIZED for monster/creature detection - explicit limb terms
         task = "<CAPTION_TO_PHRASE_GROUNDING>"
         body_parts_prompt = (
-            # Head/face parts
-            "head. face. eye. eyes. mouth. jaw. teeth. nose. horn. ear. skull. "
-            # Upper body
-            "neck. chest. torso. body. back. stomach. belly. "
-            # Arms & hands (all variations)
-            "shoulder. arm. arms. elbow. wrist. hand. hands. finger. fingers. fist. palm. claw. claws. "
-            # Legs & feet (all variations)
-            "hip. leg. legs. thigh. knee. ankle. foot. feet. toe. paw. hoof. "
-            # Extras
-            "tail. wing. wings. tentacle. "
-            # Appearance
-            "hair. beard. mane. fur. scales. "
-            # Equipment
-            "armor. helmet. weapon. sword. shield. cape."
+            # HEAD - highest priority
+            "head. face. skull. "
+            # ARMS - explicit left/right for better detection
+            "left arm. right arm. arm. upper arm. forearm. "
+            # HANDS - explicit
+            "left hand. right hand. hand. claw. claws. fist. "
+            # LEGS - explicit left/right
+            "left leg. right leg. leg. thigh. lower leg. "
+            # FEET - explicit
+            "left foot. right foot. foot. feet. paw. hoof. "
+            # TORSO
+            "torso. body. chest. stomach. "
+            # EXTRAS
+            "tail. wing. left wing. right wing. horn. horns. "
+            # NECK
+            "neck. "
+            # TENTACLES for monsters
+            "tentacle. tentacles."
         )
 
         inputs = self._florence2_processor(
@@ -1202,12 +1215,19 @@ class GroundedSAM2Engine(SegmentationEngine):
         """
         Convert a descriptive label to a body part name.
         'purple cat head' -> 'head'
+        'left arm of creature' -> 'left arm'
         'monster' -> 'body'
         """
-        # Check if any body part is mentioned
+        # Find the LONGEST matching body part (so "left arm" wins over "arm")
+        best_match = None
+        best_length = 0
         for part in BODY_PARTS:
-            if part in label:
-                return part
+            if part in label and len(part) > best_length:
+                best_match = part
+                best_length = len(part)
+
+        if best_match:
+            return best_match
 
         # Mapping for full-object descriptions
         mappings = {
@@ -1230,7 +1250,7 @@ class GroundedSAM2Engine(SegmentationEngine):
 
     def smart_detect(self, text_prompt: str = None,
                      use_florence: bool = True,
-                     box_threshold: float = 0.20) -> List[Tuple[str, np.ndarray, float]]:
+                     box_threshold: float = 0.15) -> List[Tuple[str, np.ndarray, float]]:
         """
         BEST detection - uses Florence-2 unified vision model.
 
@@ -2462,8 +2482,8 @@ class VeilbreakersRigger:
     
     def auto_detect(self,
                     text_prompt: str,
-                    box_threshold: float = 0.25,
-                    text_threshold: float = 0.25,
+                    box_threshold: float = 0.15,
+                    text_threshold: float = 0.15,
                     extract_parts: bool = True,
                     inpaint_quality: InpaintQuality = InpaintQuality.STANDARD) -> List[BodyPart]:
         """
@@ -2589,7 +2609,7 @@ class VeilbreakersRigger:
     def smart_detect(self,
                      text_prompt: str = None,
                      use_florence: bool = True,
-                     box_threshold: float = 0.25,
+                     box_threshold: float = 0.15,
                      extract_parts: bool = True,
                      inpaint_quality: InpaintQuality = InpaintQuality.STANDARD) -> List[BodyPart]:
         """
