@@ -714,7 +714,7 @@ def save_custom_parts(parts_text):
 
 
 # Build UI - THE GREATEST LEARNING INTERFACE EVER MADE
-with gr.Blocks(title="VEILBREAKERS - AI Learning System", theme=gr.themes.Soft(primary_hue="orange")) as demo:
+with gr.Blocks(title="VEILBREAKERS - AI Learning System") as demo:
 
     gr.Markdown("""
     # 🧠 VEILBREAKERS AI LEARNING SYSTEM
@@ -1009,4 +1009,4 @@ if __name__ == "__main__":
 ╚══════════════════════════════════════════════════════════════════════════════╝
     """)
 
-    demo.launch(server_name="127.0.0.1")
+    demo.launch(server_name="127.0.0.1", theme=gr.themes.Soft(primary_hue="orange"))
