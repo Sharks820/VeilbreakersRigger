@@ -1083,11 +1083,14 @@ class GroundedSAM2Engine(SegmentationEngine):
         for bbox, label in zip(bboxes, labels):
             label_lower = label.lower().strip()
 
-            # Check if it's a body part we care about
-            is_body_part = any(part in label_lower for part in BODY_PARTS)
-            if not is_body_part:
-                # Still use it but with lower priority
-                pass
+            # CRITICAL: Extract body part name from descriptive label
+            # "purple cat head" -> "head", "monster" -> "body"
+            body_part = self._extract_body_part(label_lower)
+
+            # Skip non-body-part detections
+            if body_part.startswith("unknown_"):
+                logger.info(f"  SKIP: '{label_lower}' -> not a body part")
+                continue
 
             x1, y1, x2, y2 = bbox
             box_array = np.array([x1, y1, x2, y2])
@@ -1102,21 +1105,48 @@ class GroundedSAM2Engine(SegmentationEngine):
             mask = (masks[best_idx] * 255).astype(np.uint8)
             confidence = float(scores[best_idx])
 
-            # Clean up label name
-            clean_name = label_lower.replace(' ', '_')
-
-            # Handle duplicates
-            if clean_name in name_counts:
-                name_counts[clean_name] += 1
-                final_name = f"{clean_name}_{name_counts[clean_name]}"
+            # Handle duplicates (arm, arm_2, arm_3)
+            if body_part in name_counts:
+                name_counts[body_part] += 1
+                final_name = f"{body_part}_{name_counts[body_part]}"
             else:
-                name_counts[clean_name] = 0
-                final_name = clean_name
+                name_counts[body_part] = 1
+                final_name = body_part
 
             results.append((final_name, mask, confidence))
-            logger.info(f"  {final_name}: bbox={[int(x) for x in bbox]}, conf={confidence:.2%}")
+            logger.info(f"  '{label_lower}' -> {final_name}: bbox={[int(x) for x in bbox]}, conf={confidence:.2%}")
 
         return results
+
+    def _extract_body_part(self, label: str) -> str:
+        """
+        Convert a descriptive label to a body part name.
+        'purple cat head' -> 'head'
+        'monster' -> 'body'
+        """
+        # Check if any body part is mentioned
+        for part in BODY_PARTS:
+            if part in label:
+                return part
+
+        # Mapping for full-object descriptions
+        mappings = {
+            "cat": "body", "dog": "body", "monster": "body", "creature": "body",
+            "animal": "body", "character": "body", "figure": "body", "person": "body",
+            "dragon": "body", "beast": "body", "demon": "body",
+            "face": "head", "skull": "head", "torso": "body", "trunk": "body",
+        }
+
+        for key, value in mappings.items():
+            if key in label:
+                return value
+
+        # Try last word
+        words = label.split()
+        if words and words[-1] in BODY_PARTS:
+            return words[-1]
+
+        return f"unknown_{label.replace(' ', '_')[:15]}"
 
     def smart_detect(self, text_prompt: str = None,
                      use_florence: bool = True,
