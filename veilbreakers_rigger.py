@@ -262,17 +262,99 @@ BODY_TEMPLATES = {
     }
 }
 
-# Standard body parts for detection
+# Standard body parts for detection - COMPREHENSIVE MONSTER LIST
 BODY_PARTS = [
-    'head', 'body', 'torso', 'chest', 'abdomen', 'pelvis',
-    'arm', 'upper arm', 'forearm', 'hand', 'finger',
-    'leg', 'thigh', 'shin', 'calf', 'foot', 'toe',
-    'neck', 'shoulder', 'elbow', 'wrist', 'knee', 'ankle',
-    'tail', 'wing', 'horn', 'antenna', 'tentacle', 'claw', 'paw',
-    'eye', 'ear', 'nose', 'mouth', 'jaw', 'tongue', 'teeth', 'fang',
-    'hair', 'mane', 'fur', 'feather', 'scale', 'shell', 'carapace',
-    'spine', 'rib', 'skull', 'bone',
-    'left', 'right', 'front', 'back', 'upper', 'lower',
+    # === HEAD & FACE ===
+    'head', 'skull', 'face', 'snout', 'muzzle', 'beak', 'mandible',
+    'eye', 'eyes', 'eyeball', 'pupil', 'iris', 'eyelid', 'eyebrow', 'brow',
+    'ear', 'ears', 'horn', 'horns', 'antler', 'antlers', 'antenna', 'antennae',
+    'nose', 'nostril', 'nostrils', 'mouth', 'maw', 'lips', 'lip',
+    'jaw', 'jaws', 'chin', 'cheek', 'cheeks', 'forehead', 'temple',
+    'tongue', 'teeth', 'tooth', 'fang', 'fangs', 'tusk', 'tusks',
+    'whisker', 'whiskers', 'barbel', 'barbels',
+
+    # === NECK & TORSO ===
+    'neck', 'throat', 'gullet', 'nape',
+    'body', 'torso', 'trunk', 'chest', 'breast', 'ribcage', 'ribs',
+    'abdomen', 'belly', 'stomach', 'gut', 'midriff',
+    'pelvis', 'hip', 'hips', 'groin', 'waist',
+    'back', 'spine', 'backbone', 'vertebra', 'vertebrae',
+    'shoulder', 'shoulders', 'collarbone', 'clavicle',
+
+    # === ARMS & HANDS ===
+    'arm', 'arms', 'upper arm', 'forearm', 'bicep', 'tricep',
+    'elbow', 'elbows', 'wrist', 'wrists',
+    'hand', 'hands', 'palm', 'palms', 'fist', 'fists',
+    'finger', 'fingers', 'thumb', 'thumbs', 'knuckle', 'knuckles',
+    'claw', 'claws', 'talon', 'talons', 'nail', 'nails',
+    'pincer', 'pincers', 'gripper', 'grippers',
+
+    # === LEGS & FEET ===
+    'leg', 'legs', 'thigh', 'thighs', 'shin', 'shins', 'calf', 'calves',
+    'knee', 'knees', 'kneecap', 'ankle', 'ankles',
+    'foot', 'feet', 'sole', 'soles', 'heel', 'heels',
+    'toe', 'toes', 'hoof', 'hooves', 'paw', 'paws', 'pad', 'pads',
+    'spur', 'spurs', 'dewclaw',
+
+    # === WINGS ===
+    'wing', 'wings', 'winglet', 'wingtip', 'wingspan',
+    'membrane', 'wing membrane', 'patagium',
+    'feather', 'feathers', 'plume', 'plumes', 'quill', 'quills',
+    'primary', 'primaries', 'secondary', 'secondaries', 'covert', 'coverts',
+
+    # === TAIL ===
+    'tail', 'tails', 'tail tip', 'tail base', 'tail fin',
+    'stinger', 'stingers', 'barb', 'barbs', 'rattle', 'rattler',
+
+    # === TENTACLES & APPENDAGES ===
+    'tentacle', 'tentacles', 'tendril', 'tendrils', 'appendage', 'appendages',
+    'pseudopod', 'pseudopods', 'flagellum', 'flagella', 'cilia',
+    'sucker', 'suckers', 'adhesive pad',
+
+    # === SKIN & COVERING ===
+    'skin', 'hide', 'flesh', 'epidermis',
+    'scale', 'scales', 'scute', 'scutes', 'plate', 'plates',
+    'shell', 'carapace', 'exoskeleton', 'armor', 'armour', 'plating',
+    'fur', 'pelt', 'coat', 'hair', 'mane', 'tuft', 'tufts',
+    'spike', 'spikes', 'spine', 'spines', 'quill', 'quills', 'barb', 'barbs',
+    'wart', 'warts', 'bump', 'bumps', 'nodule', 'nodules',
+
+    # === INSECT & ARTHROPOD ===
+    'thorax', 'prothorax', 'mesothorax', 'metathorax',
+    'segment', 'segments', 'segmented body',
+    'exoskeleton', 'chitin', 'cuticle',
+    'mandibles', 'maxilla', 'labrum', 'labium',
+    'compound eye', 'compound eyes', 'ocelli', 'simple eye',
+    'spiracle', 'spiracles', 'trachea',
+    'ovipositor', 'cerci', 'cercus',
+
+    # === AQUATIC ===
+    'fin', 'fins', 'dorsal fin', 'pectoral fin', 'pelvic fin', 'anal fin', 'caudal fin',
+    'flipper', 'flippers', 'paddle', 'paddles',
+    'gill', 'gills', 'gill slit', 'gill slits', 'operculum',
+    'lateral line', 'swim bladder',
+    'blowhole', 'blowholes',
+
+    # === SPECIAL MONSTER PARTS ===
+    'core', 'nucleus', 'heart', 'organ', 'organs',
+    'gem', 'crystal', 'jewel', 'orb', 'sphere',
+    'gland', 'glands', 'sac', 'sacs', 'pouch', 'pouches',
+    'vent', 'vents', 'pore', 'pores', 'orifice',
+    'proboscis', 'trunk', 'snorkel',
+    'crest', 'crests', 'frill', 'frills', 'fin sail', 'sail',
+    'halo', 'aura', 'glow', 'emanation',
+    'shadow', 'void', 'darkness', 'essence',
+    'root', 'roots', 'vine', 'vines', 'branch', 'branches', 'leaf', 'leaves',
+    'mushroom', 'cap', 'stem', 'spore', 'spores', 'mycelium',
+    'slime', 'ooze', 'blob', 'mass', 'puddle',
+    'bone', 'bones', 'skeleton', 'rib', 'ribcage',
+    'muscle', 'muscles', 'sinew', 'tendon', 'tendons',
+
+    # === DIRECTIONAL MODIFIERS ===
+    'left', 'right', 'front', 'back', 'rear', 'hind',
+    'upper', 'lower', 'top', 'bottom', 'middle', 'center',
+    'inner', 'outer', 'first', 'second', 'third',
+    'main', 'primary', 'secondary', 'auxiliary',
 ]
 
 # =============================================================================
