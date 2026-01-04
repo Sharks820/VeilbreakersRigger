@@ -232,7 +232,7 @@ class MonsterPartsDataset(Dataset):
                 labels = augmented["labels"]
                 image = Image.fromarray(image_np)
                 h, w = image_np.shape[:2]
-            except Exception as e:
+            except Exception:
                 # Augmentation failed, use original
                 pass
 

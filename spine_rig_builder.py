@@ -394,11 +394,11 @@ class SpineRigBuilder:
             self.precision_segmenter = PrecisionSegmenter()
             seg_status = get_segmentation_status()
             if seg_status.get("sam2"):
-                logger.info("✅ SAM2 precision segmentation available (99.9% accuracy)")
+                logger.info("SAM2 precision segmentation available (99.9% accuracy)")
             elif seg_status.get("opencv"):
-                logger.info("⚡ OpenCV segmentation available (85% accuracy)")
+                logger.info("OpenCV segmentation available (85% accuracy)")
             else:
-                logger.info("📦 Basic segmentation available")
+                logger.info("Basic segmentation available")
         else:
             self.precision_segmenter = None
         
@@ -674,8 +674,6 @@ class SpineRigBuilder:
                         # Update coordinates
                         x1 += int(col_min)
                         y1 += int(row_min)
-                        pw = int(col_max - col_min + 1)
-                        ph = int(row_max - row_min + 1)
                 
                 # Save part image
                 part_path = parts_dir / f"{part_name}.png"
@@ -821,7 +819,7 @@ class SpineRigBuilder:
             if ik:
                 rig.ik_constraints.append(ik)
     
-    def _add_tail(self, rig: CreatureRig, parts_data: Dict) -> None:
+    def _add_tail(self, rig: CreatureRig, _parts_data: Dict) -> None:
         """Add a physics-enabled tail"""
         body_bone = "body" if any(b.name == "body" for b in rig.bones) else "torso"
         
@@ -840,7 +838,7 @@ class SpineRigBuilder:
         rig.bones.extend(bones)
         rig.physics_constraints.extend(physics)
     
-    def _add_wings(self, rig: CreatureRig, parts_data: Dict) -> None:
+    def _add_wings(self, rig: CreatureRig, _parts_data: Dict) -> None:
         """Add wing bones"""
         body_bone = "body" if any(b.name == "body" for b in rig.bones) else "torso"
         
@@ -863,7 +861,7 @@ class SpineRigBuilder:
             if ik:
                 rig.ik_constraints.append(ik)
     
-    def _add_hair(self, rig: CreatureRig, parts_data: Dict) -> None:
+    def _add_hair(self, rig: CreatureRig, _parts_data: Dict) -> None:
         """Add physics-enabled hair"""
         head_bone = "head" if any(b.name == "head" for b in rig.bones) else "skull"
         
@@ -884,7 +882,7 @@ class SpineRigBuilder:
             rig.bones.extend(bones)
             rig.physics_constraints.extend(physics)
     
-    def _add_cape(self, rig: CreatureRig, parts_data: Dict) -> None:
+    def _add_cape(self, rig: CreatureRig, _parts_data: Dict) -> None:
         """Add physics-enabled cape"""
         body_bone = "body" if any(b.name == "body" for b in rig.bones) else "torso"
         
@@ -903,7 +901,7 @@ class SpineRigBuilder:
         rig.bones.extend(bones)
         rig.physics_constraints.extend(physics)
     
-    def _add_tentacles(self, rig: CreatureRig, count: int, parts_data: Dict) -> None:
+    def _add_tentacles(self, rig: CreatureRig, count: int, _parts_data: Dict) -> None:
         """Add physics-enabled tentacles"""
         body_bone = "main_body" if any(b.name == "main_body" for b in rig.bones) else "body"
         if not any(b.name == body_bone for b in rig.bones):
@@ -1048,7 +1046,7 @@ class SpineRigBuilder:
                 rig.ik_constraints.append(ik)
             rig.physics_constraints.extend(physics)
     
-    def _create_slots(self, rig: CreatureRig, parts_data: Dict) -> None:
+    def _create_slots(self, rig: CreatureRig, _parts_data: Dict) -> None:
         """Create slots for all parts"""
         # Create a slot for each main bone (not chain bones)
         for bone in rig.bones:
@@ -1219,8 +1217,8 @@ class SpineRigBuilder:
                 gen, "root", [groups["arms_left"], groups["arms_right"]] + 
                 [[a] for a in groups["arms_all"][2:]], 1.2 / speed_mult),
             "attack_bite": lambda: templates.attack_bite(
-                gen, "root", groups["head"], 
-                next((b for b in [bn for bn in [bone.name for bone in gen.rig.bones] if "jaw" in bn.lower()]), ""),
+                gen, "root", groups["head"],
+                next((bone.name for bone in gen.rig.bones if "jaw" in bone.name.lower()), ""),
                 0.5 / speed_mult),
             "attack_pounce": lambda: templates.attack_pounce(
                 gen, "root", groups["legs_front"], 0.8 / speed_mult),
@@ -1254,7 +1252,7 @@ class SpineRigBuilder:
                 gen, "root", groups["all_slots"][:3], 0.8 / speed_mult),
             "special_roar": lambda: templates.special_roar(
                 gen, "root", groups["head"],
-                next((b for b in [bn for bn in [bone.name for bone in gen.rig.bones] if "jaw" in bn.lower()]), ""),
+                next((bone.name for bone in gen.rig.bones if "jaw" in bone.name.lower()), ""),
                 1.2 / speed_mult),
             "special_transform": lambda: templates.special_transform(
                 gen, "root", groups["all_slots"], 2.0 / speed_mult),

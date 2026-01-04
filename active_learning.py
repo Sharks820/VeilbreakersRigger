@@ -583,8 +583,6 @@ def run_ab_comparison(image):
     if image is None:
         return None, None, "Upload an image first!"
 
-    results = []
-
     # Test with base model
     try:
         from transformers import AutoProcessor, AutoModelForCausalLM

@@ -97,7 +97,7 @@ class TrainingMetricsTracker:
         with open(progress_file, "w") as f:
             json.dump(self.current_session, f, indent=2)
 
-    def end_session(self, success: bool = True, error_msg: str = None) -> str:
+    def end_session(self, success: bool = True, error_msg: str = None) -> Optional[str]:
         """End training session and save to history"""
         if self.current_session is None:
             return None
@@ -345,7 +345,6 @@ def generate_ascii_learning_curve() -> str:
 def get_training_data_stats() -> Dict:
     """Get statistics about the training data"""
     labels_file = BASE_DIR / "training_data" / "labels.json"
-    images_dir = BASE_DIR / "training_data" / "images"
 
     if not labels_file.exists():
         return {

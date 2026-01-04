@@ -244,9 +244,8 @@ def load_image(image, sam_size: str):
     if image is None:
         return None, "No image provided", [], gr.update(choices=[""]), None
 
-    if STATE.rigger is None:
-        if not STATE.init_rigger(sam_size):
-            return None, "Failed to initialize rigger", [], gr.update(choices=[""]), None
+    if STATE.rigger is None and not STATE.init_rigger(sam_size):
+        return None, "Failed to initialize rigger", [], gr.update(choices=[""]), None
 
     STATE.reset()
 
@@ -783,7 +782,7 @@ def generate_animated_rig(
                 elif part.image is not None:
                     # Estimate bbox from image size and pivot
                     h, w = part.image.shape[:2] if len(part.image.shape) >= 2 else (100, 100)
-                    px, py = part.pivot if part.pivot else (w//2, h//2)
+                    _, _ = part.pivot if part.pivot else (w//2, h//2)
                     bbox = (0, 0, w, h)
 
                 custom_parts[part_name] = {
@@ -889,8 +888,8 @@ def save_current_as_training(part_name: str):
     if not rows.any() or not cols.any():
         return "Invalid mask - no region selected"
 
-    y_min, y_max = np.where(rows)[0][[0, -1]]
-    x_min, x_max = np.where(cols)[0][[0, -1]]
+    y_min, y_max = np.nonzero(rows)[0][[0, -1]]
+    x_min, x_max = np.nonzero(cols)[0][[0, -1]]
     bbox = [int(x_min), int(y_min), int(x_max), int(y_max)]
 
     # Save image

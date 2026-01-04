@@ -106,8 +106,8 @@ class PrecisionSegmenter:
             checkpoint_path = Path.home() / ".cache" / "sam2" / checkpoint
             
             if not checkpoint_path.exists():
-                logger.info(f"SAM2 checkpoint not found. Please download from:")
-                logger.info(f"https://github.com/facebookresearch/segment-anything-2#model-checkpoints")
+                logger.info("SAM2 checkpoint not found. Please download from:")
+                logger.info("https://github.com/facebookresearch/segment-anything-2#model-checkpoints")
                 logger.info(f"Save to: {checkpoint_path}")
                 return
             
@@ -231,7 +231,7 @@ class PrecisionSegmenter:
     def _segment_with_sam2(
         self,
         img_array: np.ndarray,
-        expected_parts: List[str],
+        _expected_parts: List[str],
         part_hints: Dict[str, Tuple[int, int]],
         output_dir: Path
     ) -> Dict[str, SegmentedPart]:
@@ -272,7 +272,7 @@ class PrecisionSegmenter:
     def _segment_with_opencv(
         self,
         img_array: np.ndarray,
-        expected_parts: List[str],
+        _expected_parts: List[str],
         part_hints: Dict[str, Tuple[int, int]],
         output_dir: Path
     ) -> Dict[str, SegmentedPart]:
@@ -329,7 +329,7 @@ class PrecisionSegmenter:
     def _segment_basic(
         self,
         img_array: np.ndarray,
-        expected_parts: List[str],
+        _expected_parts: List[str],
         part_hints: Dict[str, Tuple[int, int]],
         output_dir: Path
     ) -> Dict[str, SegmentedPart]:

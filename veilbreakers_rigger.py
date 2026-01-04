@@ -985,20 +985,6 @@ class GroundedSAM2Engine(SegmentationEngine):
 
         logger.info("Florence-2 detecting regions...")
 
-        # Body parts we care about
-        BODY_PARTS = {
-            'head', 'face', 'skull', 'eye', 'eyes', 'mouth', 'nose', 'ear', 'horn', 'horns',
-            'body', 'torso', 'chest', 'stomach', 'back', 'trunk',
-            'arm', 'arms', 'hand', 'hands', 'finger', 'fingers', 'claw', 'claws', 'fist',
-            'leg', 'legs', 'foot', 'feet', 'paw', 'paws', 'hoof',
-            'tail', 'wing', 'wings', 'fin', 'tentacle', 'tentacles',
-            'hair', 'fur', 'mane', 'feather', 'scale',
-            'weapon', 'sword', 'axe', 'staff', 'shield', 'spear',
-            'armor', 'helmet', 'cape', 'cloak',
-            'shoulder', 'neck', 'jaw', 'knee', 'elbow',
-            'creature', 'monster', 'beast', 'demon', 'dragon', 'character', 'figure', 'person',
-        }
-
         # Handle both PIL and numpy input
         if isinstance(self._current_image, Image.Image):
             pil_image = self._current_image
