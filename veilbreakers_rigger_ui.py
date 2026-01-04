@@ -20,6 +20,18 @@ import os
 from typing import Optional, List, Tuple, Dict, Any
 from datetime import datetime
 
+
+class NumpyEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles numpy types"""
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
 # =============================================================================
 # IMPORTS WITH GRACEFUL DEGRADATION
 # =============================================================================
@@ -361,10 +373,10 @@ def export_rig(monster_name: str, archetype: str, selected_animations: list):
             bone_count = len(spine_data.get('bones', []))
             slot_count = len(spine_data.get('slots', []))
 
-            # Save Spine JSON
+            # Save Spine JSON (use NumpyEncoder to handle numpy types)
             output_path = temp_dir / f"{monster_name}_spine.json"
             with open(output_path, 'w') as f:
-                json.dump(spine_data, f, indent=2)
+                json.dump(spine_data, f, indent=2, cls=NumpyEncoder)
 
             # Export part images as PNGs
             parts_dir = temp_dir / "parts"
