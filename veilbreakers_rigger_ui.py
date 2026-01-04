@@ -192,18 +192,49 @@ STATE = AppState()
 # HELPER FUNCTIONS
 # =============================================================================
 
-def create_visualization(show_mask: bool = True, mask_color: tuple = (255, 100, 100)) -> Optional[np.ndarray]:
-    """Create visualization of current state"""
+def create_visualization(show_mask: bool = True, mask_color: tuple = (255, 100, 100), show_boxes: bool = True) -> Optional[np.ndarray]:
+    """Create visualization of current state with bounding boxes"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
         return None
 
     vis = STATE.rigger.get_working_image().copy()
 
+    # Show current selection mask
     if show_mask and STATE.rigger.current_mask is not None:
         mask = STATE.rigger.current_mask
         overlay = np.zeros_like(vis)
         overlay[mask > 0] = mask_color
         vis = (vis * 0.7 + overlay * 0.3).astype(np.uint8)
+
+    # Draw bounding boxes around all detected parts
+    if show_boxes:
+        pil_img = Image.fromarray(vis)
+        draw = ImageDraw.Draw(pil_img)
+
+        parts = STATE.rigger.get_parts()
+        for part in parts:
+            # Check for bbox (BoundingBox object) or bounds (tuple)
+            bbox = None
+            if hasattr(part, 'bbox') and part.bbox:
+                bbox = (part.bbox.x1, part.bbox.y1, part.bbox.x2, part.bbox.y2)
+            elif hasattr(part, 'bounds') and part.bounds:
+                bbox = part.bounds
+
+            if bbox:
+                x1, y1, x2, y2 = bbox
+                # Green box with label
+                draw.rectangle([x1, y1, x2, y2], outline=(0, 255, 0), width=3)
+                # Label background
+                label = part.name
+                try:
+                    text_bbox = draw.textbbox((x1, y1 - 20), label)
+                    draw.rectangle([text_bbox[0] - 2, text_bbox[1] - 2, text_bbox[2] + 2, text_bbox[3] + 2], fill=(0, 255, 0))
+                    draw.text((x1, y1 - 20), label, fill=(0, 0, 0))
+                except Exception:
+                    # Fallback if textbbox fails
+                    draw.text((x1, y1 - 15), label, fill=(0, 255, 0))
+
+        vis = np.array(pil_img)
 
     return vis
 
