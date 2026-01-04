@@ -262,6 +262,19 @@ BODY_TEMPLATES = {
     }
 }
 
+# Standard body parts for detection
+BODY_PARTS = [
+    'head', 'body', 'torso', 'chest', 'abdomen', 'pelvis',
+    'arm', 'upper arm', 'forearm', 'hand', 'finger',
+    'leg', 'thigh', 'shin', 'calf', 'foot', 'toe',
+    'neck', 'shoulder', 'elbow', 'wrist', 'knee', 'ankle',
+    'tail', 'wing', 'horn', 'antenna', 'tentacle', 'claw', 'paw',
+    'eye', 'ear', 'nose', 'mouth', 'jaw', 'tongue', 'teeth', 'fang',
+    'hair', 'mane', 'fur', 'feather', 'scale', 'shell', 'carapace',
+    'spine', 'rib', 'skull', 'bone',
+    'left', 'right', 'front', 'back', 'upper', 'lower',
+]
+
 # =============================================================================
 # DATA CLASSES
 # =============================================================================

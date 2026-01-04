@@ -59,17 +59,58 @@ class PartType(Enum):
 
 class CreatureArchetype(Enum):
     """Pre-defined creature templates with animation sets"""
-    HUMANOID = auto()        # 2 arms, 2 legs, standard
-    MULTI_ARM = auto()       # 4-10 arms
-    QUADRUPED = auto()       # 4 legs, optional tail
-    SERPENT = auto()         # No legs, body chain
+    # === STANDARD ARCHETYPES ===
+    HUMANOID = auto()        # 2 arms, 2 legs, standard bipedal
+    MULTI_ARM = auto()       # 4-10 arms, humanoid base
+    QUADRUPED = auto()       # 4 legs, optional tail (wolf, horse)
+    SERPENT = auto()         # No legs, body chain (snake, wyrm)
     SKELETON = auto()        # Undead, loose joints
-    FLOATING = auto()        # No ground contact
+    FLOATING = auto()        # No ground contact (ghost, wisp)
     GIANT = auto()           # Huge scale, slow power
-    INSECTOID = auto()       # Multiple segments, twitchy
-    WINGED = auto()          # Has wings
-    AQUATIC = auto()         # Fins, tentacles, flowing
+    INSECTOID = auto()       # 6 legs, segments (beetle, mantis)
+    WINGED = auto()          # Has wings (bat, dragon)
+    AQUATIC = auto()         # Fins, gills (fish, shark)
     ELDRITCH = auto()        # Cosmic horror, many parts
+
+    # === HYBRID ARCHETYPES ===
+    CENTAUR = auto()         # Human upper + quadruped lower
+    NAGA = auto()            # Human upper + serpent lower
+    MERMAID = auto()         # Human upper + fish tail
+    CHIMERA = auto()         # Mixed body parts (lion+goat+snake)
+
+    # === CREATURE-SPECIFIC ===
+    ARACHNID = auto()        # 8 legs, spider body
+    AVIAN = auto()           # Bird anatomy (wings as arms)
+    AMPHIBIAN = auto()       # Frog, salamander, newt
+    CRUSTACEAN = auto()      # Crab, lobster (shell, claws)
+    WORM = auto()            # Caterpillar, centipede (many segments)
+    DRAGON = auto()          # Full dragon (4 legs + wings + tail)
+
+    # === FANTASY/MYTHICAL ===
+    DEMON = auto()           # Horns, wings, tail, cloven hooves
+    ANGEL = auto()           # Humanoid with wings, halo
+    UNDEAD = auto()          # Zombie, lich, ghoul
+    SPECTRAL = auto()        # Ghost, wraith (transparent)
+    ELEMENTAL = auto()       # Fire/water/earth/air being
+
+    # === ABERRANT ===
+    SLIME = auto()           # Formless blob, no skeleton
+    TENTACLE_BEAST = auto()  # Primarily tentacles (octopus, kraken)
+    MULTI_HEAD = auto()      # Hydra, cerberus (multiple heads)
+    CYCLOPS = auto()         # One-eyed giant
+    SWARM = auto()           # Colony (bees, rats, bats)
+
+    # === CONSTRUCT/OTHER ===
+    MECHANICAL = auto()      # Robot, golem, construct
+    CRYSTALLINE = auto()     # Crystal/gem creature
+    FUNGAL = auto()          # Mushroom, myconid
+    PLANT = auto()           # Treant, vine creature
+    SHADOW = auto()          # Shadow being, living darkness
+    COLOSSUS = auto()        # Massive scale (building-sized)
+    PARASITIC = auto()       # Attaches to host
+    MIMIC = auto()           # Shapeshifter base form
+
+    # === FALLBACK ===
     CUSTOM = auto()          # User-defined
 
 class AnimationType(Enum):

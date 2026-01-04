@@ -365,6 +365,14 @@ def smart_detect_parts(image, prompt: str, threshold: float):
 
         STATE.save_state()
 
+        # AUTO-LEARN: Save all detected parts as training data
+        if parts and STATE.rigger.current_rig is not None:
+            for part in parts:
+                if hasattr(part, 'bounds') and part.bounds:
+                    bbox = [int(part.bounds[0]), int(part.bounds[1]),
+                            int(part.bounds[2]), int(part.bounds[3])]
+                    auto_save_training_data(STATE.rigger.current_rig.original_image, part.name, bbox)
+
         if len(parts) == 0:
             return (
                 create_visualization(show_mask=False),
@@ -375,7 +383,7 @@ def smart_detect_parts(image, prompt: str, threshold: float):
 
         return (
             create_visualization(show_mask=False),
-            f"Detected {len(parts)} parts: {', '.join(p.name for p in parts)}. Click 'Export' when ready.",
+            f"Detected {len(parts)} parts: {', '.join(p.name for p in parts)} (auto-saved for AI learning)",
             get_parts_table(),
             gr.update(choices=get_part_choices())
         )
@@ -538,11 +546,58 @@ def next_segment():
 
 
 # =============================================================================
+# AUTO-LEARNING INTEGRATION
+# =============================================================================
+
+def auto_save_training_data(image: np.ndarray, part_name: str, bbox: list):
+    """Automatically save part data for AI training - called on every add/edit"""
+    try:
+        TRAINING_DIR.mkdir(parents=True, exist_ok=True)
+        IMAGES_DIR.mkdir(exist_ok=True)
+
+        # Generate unique image name based on content hash
+        img_hash = hash(image.tobytes()) % 1000000
+        img_name = f"auto_{img_hash}.png"
+        img_path = IMAGES_DIR / img_name
+
+        # Save image if not already saved
+        if not img_path.exists():
+            Image.fromarray(image).save(img_path)
+
+        # Load or create labels
+        if LABELS_FILE.exists():
+            with open(LABELS_FILE) as f:
+                all_labels = json.load(f)
+        else:
+            all_labels = []
+
+        # Find or create entry for this image
+        existing = next((item for item in all_labels if item.get("image") == img_name), None)
+        new_box = {"label": part_name.lower(), "bbox": bbox}
+
+        if existing:
+            # Check if this exact box already exists
+            if new_box not in existing["boxes"]:
+                existing["boxes"].append(new_box)
+        else:
+            all_labels.append({"image": img_name, "boxes": [new_box]})
+
+        # Save labels
+        with open(LABELS_FILE, "w") as f:
+            json.dump(all_labels, f, indent=2)
+
+        return True
+    except Exception as e:
+        print(f"Auto-learning save failed: {e}")
+        return False
+
+
+# =============================================================================
 # PART MANAGEMENT
 # =============================================================================
 
 def add_part(name: str, z_index: int, parent: str, pivot: str, quality: str):
-    """Add current selection as a part"""
+    """Add current selection as a part - AUTO-SAVES to training data"""
     if STATE.rigger is None or STATE.rigger.current_mask is None:
         return None, "Select a region first!", [], gr.update(choices=[""])
 
@@ -574,6 +629,17 @@ def add_part(name: str, z_index: int, parent: str, pivot: str, quality: str):
 
         STATE.save_state()
 
+        # AUTO-LEARN: Save this part to training data
+        if STATE.rigger.current_rig is not None and STATE.rigger.current_mask is not None:
+            mask = STATE.rigger.current_mask
+            rows = np.any(mask, axis=1)
+            cols = np.any(mask, axis=0)
+            if rows.any() and cols.any():
+                y_min, y_max = np.nonzero(rows)[0][[0, -1]]
+                x_min, x_max = np.nonzero(cols)[0][[0, -1]]
+                bbox = [int(x_min), int(y_min), int(x_max), int(y_max)]
+                auto_save_training_data(STATE.rigger.current_rig.original_image, name, bbox)
+
         # Update segmenter with new working image
         vis = STATE.rigger.get_working_image()
         if vis is not None:
@@ -581,7 +647,7 @@ def add_part(name: str, z_index: int, parent: str, pivot: str, quality: str):
 
         return (
             create_visualization(show_mask=False),
-            f"Added part: {name}",
+            f"Added part: {name} (auto-saved for AI learning)",
             get_parts_table(),
             gr.update(choices=get_part_choices())
         )
@@ -1184,48 +1250,6 @@ def create_ui():
                     parts_markdown = gr.Markdown("No parts saved yet.")
                     refresh_parts_btn = gr.Button("Refresh Parts List", size="sm")
 
-                with gr.Tab("🧠 Learning"):
-                    gr.Markdown("### Teach the AI Your Way")
-                    gr.Markdown("""
-                    **How it works:**
-                    1. Select a part on the image (click or use Smart Detect)
-                    2. Enter the correct label name below
-                    3. Click 'Save as Training Data'
-                    4. After 5+ corrections, click 'Train Model'
-                    5. Restart the app to use the improved AI!
-                    """)
-
-                    training_status = gr.Textbox(
-                        value=get_training_status(),
-                        label="Training Data Status",
-                        interactive=False
-                    )
-
-                    gr.Markdown("---")
-                    gr.Markdown("#### Save Current Selection")
-                    training_label = gr.Textbox(
-                        label="Part Label",
-                        placeholder="e.g., head, arm_left, tail",
-                        info="What should this part be called?"
-                    )
-                    save_training_btn = gr.Button("💾 Save as Training Data", variant="secondary")
-                    training_save_status = gr.Textbox(label="Save Status", interactive=False)
-
-                    gr.Markdown("---")
-                    gr.Markdown("#### Train Model")
-                    gr.Markdown("*Requires 5+ saved corrections. Training takes 5-30 minutes.*")
-                    train_btn = gr.Button("🚀 Train Model", variant="primary")
-                    training_result = gr.Textbox(label="Training Result", interactive=False, lines=3)
-
-                    gr.Markdown("---")
-                    gr.Markdown("#### Learning Report")
-                    learning_report = gr.Code(
-                        value=generate_learning_report() if LEARNING_AVAILABLE else "Learning metrics not available",
-                        label="Model Learning Progress",
-                        language=None,
-                        lines=8
-                    )
-                    refresh_report_btn = gr.Button("🔄 Refresh Report", size="sm")
 
         # Hidden state
         original_image = gr.State(None)
@@ -1280,26 +1304,6 @@ def create_ui():
 
         # Export
         export_btn.click(fn=export_rig, inputs=[monster_name, export_format], outputs=[export_status, download_file])
-
-        # Learning Tab
-        save_training_btn.click(
-            fn=save_current_as_training,
-            inputs=[training_label],
-            outputs=[training_save_status]
-        ).then(
-            fn=get_training_status,
-            outputs=[training_status]
-        )
-
-        train_btn.click(
-            fn=train_model_from_ui,
-            outputs=[training_result]
-        )
-
-        refresh_report_btn.click(
-            fn=lambda: generate_learning_report() if LEARNING_AVAILABLE else "Learning metrics not available",
-            outputs=[learning_report]
-        )
 
         # Animation
         generate_anim_btn.click(

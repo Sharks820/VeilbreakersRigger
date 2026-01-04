@@ -346,7 +346,694 @@ ARCHETYPE_CONFIGS = {
         "physics_preset": "SOFT_BODY",
         "animation_speed_mult": 0.8,
     },
-    
+
+    # =========================================================================
+    # HYBRID ARCHETYPES
+    # =========================================================================
+
+    CreatureArchetype.CENTAUR: {
+        "name": "Centaur/Taur",
+        "description": "Human upper body + quadruped lower body",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "body_lower",
+                          "leg_front_left", "leg_front_right", "leg_back_left", "leg_back_right"],
+        "optional_parts": ["tail", "hair", "weapon", "shield"],
+        "animations": [
+            "idle_breathe", "idle_combat", "idle",
+            "walk", "run", "trot", "gallop", "rear_up",
+            "attack_slash", "attack_thrust", "attack_trample", "attack_kick",
+            "hit_light", "hit_heavy",
+            "death_fall_forward", "death_collapse",
+            "special_charge", "special_stomp",
+            "spawn", "victory", "taunt",
+            "cast_buff", "cast_heal", "block"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "body_lower"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "body_lower": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "leg_front_left": {"type": PartType.RIGID_LIMB, "parent": "body_lower", "bones": 3},
+            "leg_front_right": {"type": PartType.RIGID_LIMB, "parent": "body_lower", "bones": 3},
+            "leg_back_left": {"type": PartType.RIGID_LIMB, "parent": "body_lower", "bones": 3},
+            "leg_back_right": {"type": PartType.RIGID_LIMB, "parent": "body_lower", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.NAGA: {
+        "name": "Naga/Lamia",
+        "description": "Human upper body + serpent lower body",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "tail"],
+        "optional_parts": ["hair", "hood", "weapon", "crown"],
+        "tail_segments": 8,
+        "animations": [
+            "idle_breathe", "idle_sway", "idle_menace", "idle",
+            "slither", "coil", "strike",
+            "attack_slash", "attack_bite", "attack_tail_whip", "attack_constrict",
+            "hit_light", "hit_heavy",
+            "death_collapse", "death",
+            "special_hypnotize", "special_poison", "special_coil",
+            "spawn", "taunt",
+            "cast_heal", "cast_debuff", "cast_buff"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "tail"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "tail": {"type": PartType.SOFT_TENTACLE, "parent": "root", "bones": 8},
+        }
+    },
+
+    CreatureArchetype.MERMAID: {
+        "name": "Mermaid/Merfolk",
+        "description": "Human upper body + fish tail",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "tail", "tail_fin"],
+        "optional_parts": ["hair", "fins", "crown", "trident"],
+        "tail_segments": 5,
+        "animations": [
+            "idle_breathe", "idle_float", "idle_swim", "idle",
+            "swim", "swim_fast", "surface",
+            "attack_scratch", "attack_tail_slap", "attack_trident",
+            "hit_light", "hit_heavy",
+            "death_sink", "death",
+            "special_siren_song", "special_splash", "special_dive",
+            "spawn", "taunt",
+            "cast_heal", "cast_buff", "cast_debuff"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "tail"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "tail": {"type": PartType.SOFT_TENTACLE, "parent": "root", "bones": 5},
+            "tail_fin": {"type": PartType.SOFT_HAIR, "parent": "tail", "bones": 2},
+        }
+    },
+
+    CreatureArchetype.CHIMERA: {
+        "name": "Chimera",
+        "description": "Mixed body parts creature (lion+goat+snake, etc)",
+        "expected_parts": ["head_main", "head_secondary", "body",
+                          "leg_front_left", "leg_front_right", "leg_back_left", "leg_back_right", "tail"],
+        "optional_parts": ["wings", "horns", "mane"],
+        "animations": [
+            "idle_breathe", "idle_heads_look", "idle",
+            "walk", "run", "prowl",
+            "attack_bite_main", "attack_bite_secondary", "attack_tail", "attack_pounce",
+            "hit_light", "hit_heavy",
+            "death_collapse", "death",
+            "special_roar", "special_breath", "special_frenzy",
+            "spawn", "taunt"
+        ],
+        "bone_config": {
+            "head_main": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "head_secondary": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "body": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "leg_front_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_front_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "tail": {"type": PartType.SOFT_TENTACLE, "parent": "body", "bones": 5},
+        }
+    },
+
+    # =========================================================================
+    # CREATURE-SPECIFIC ARCHETYPES
+    # =========================================================================
+
+    CreatureArchetype.ARACHNID: {
+        "name": "Arachnid/Spider",
+        "description": "Eight-legged spider body",
+        "expected_parts": ["head", "thorax", "abdomen"],
+        "optional_parts": ["fangs", "pedipalps", "spinnerets"],
+        "leg_count": 8,
+        "animations": [
+            "idle_breathe", "idle_twitch", "idle",
+            "walk", "run", "crawl", "climb",
+            "attack_bite", "attack_pounce", "attack_web_shoot",
+            "hit_light", "hit_heavy",
+            "death_curl", "death",
+            "special_web_trap", "special_venom", "special_egg_sac",
+            "spawn", "taunt"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "thorax"},
+            "thorax": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "abdomen": {"type": PartType.RIGID_CORE, "parent": "thorax"},
+        }
+    },
+
+    CreatureArchetype.AVIAN: {
+        "name": "Avian/Bird",
+        "description": "Bird anatomy with wings as primary limbs",
+        "expected_parts": ["head", "body", "wing_left", "wing_right", "leg_left", "leg_right", "tail_feathers"],
+        "optional_parts": ["crest", "beak"],
+        "animations": [
+            "idle_breathe", "idle_preen", "idle_look", "idle",
+            "walk", "hop", "fly", "glide", "land", "take_off",
+            "attack_peck", "attack_claw", "attack_dive", "attack_wing_buffet",
+            "hit_light", "hit_heavy",
+            "death_fall", "death",
+            "special_screech", "special_feather_storm",
+            "spawn", "taunt"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "body": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "wing_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 4},
+            "wing_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 4},
+            "leg_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "tail_feathers": {"type": PartType.SOFT_HAIR, "parent": "body", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.AMPHIBIAN: {
+        "name": "Amphibian",
+        "description": "Frog, salamander, newt body type",
+        "expected_parts": ["head", "body", "leg_front_left", "leg_front_right",
+                          "leg_back_left", "leg_back_right"],
+        "optional_parts": ["tail", "tongue", "throat_sac", "crest"],
+        "animations": [
+            "idle_breathe", "idle_croak", "idle",
+            "walk", "hop", "swim", "climb",
+            "attack_tongue", "attack_bite", "attack_leap",
+            "hit_light", "hit_heavy",
+            "death_flop", "death",
+            "special_croak", "special_poison_skin", "special_camouflage",
+            "spawn", "taunt"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "body": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "leg_front_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_front_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.CRUSTACEAN: {
+        "name": "Crustacean",
+        "description": "Crab, lobster, shrimp with shell and claws",
+        "expected_parts": ["head", "body", "claw_left", "claw_right",
+                          "leg_1", "leg_2", "leg_3", "leg_4", "leg_5", "leg_6"],
+        "optional_parts": ["antennae", "tail", "shell_spikes"],
+        "animations": [
+            "idle_breathe", "idle_bubble", "idle",
+            "walk_sideways", "walk_forward", "burrow",
+            "attack_pinch", "attack_claw_slam", "attack_charge",
+            "hit_light", "hit_heavy",
+            "death_flip", "death",
+            "special_shell_defense", "special_molt",
+            "spawn", "taunt"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "body": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "claw_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "claw_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.WORM: {
+        "name": "Worm/Centipede",
+        "description": "Many-segmented crawler",
+        "expected_parts": ["head", "segment_1", "segment_2", "segment_3", "segment_4",
+                          "segment_5", "segment_6", "segment_7", "segment_8", "tail"],
+        "optional_parts": ["mandibles", "antennae", "legs"],
+        "segment_count": 10,
+        "animations": [
+            "idle_writhe", "idle_coil", "idle",
+            "crawl", "burrow", "surface",
+            "attack_bite", "attack_coil", "attack_spit",
+            "hit_light", "hit_heavy",
+            "death_writhe", "death",
+            "special_split", "special_regenerate", "special_acid",
+            "spawn"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "segment_1"},
+        }
+    },
+
+    CreatureArchetype.DRAGON: {
+        "name": "Dragon",
+        "description": "Full dragon with four legs, wings, and tail",
+        "expected_parts": ["head", "neck", "body", "wing_left", "wing_right",
+                          "leg_front_left", "leg_front_right", "leg_back_left", "leg_back_right", "tail"],
+        "optional_parts": ["horns", "spines", "jaw"],
+        "animations": [
+            "idle_breathe", "idle_menace", "idle_sleep", "idle",
+            "walk", "run", "fly", "glide", "land", "take_off", "hover",
+            "attack_bite", "attack_claw", "attack_tail_sweep", "attack_wing_buffet",
+            "attack_breath_fire", "attack_breath_ice", "attack_breath_lightning",
+            "hit_light", "hit_heavy",
+            "death_crash", "death",
+            "special_roar", "special_intimidate", "special_stomp",
+            "spawn", "victory", "taunt"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "neck"},
+            "neck": {"type": PartType.SOFT_TENTACLE, "parent": "body", "bones": 4},
+            "body": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "wing_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 5},
+            "wing_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 5},
+            "leg_front_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_front_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "tail": {"type": PartType.SOFT_TENTACLE, "parent": "body", "bones": 6},
+        }
+    },
+
+    # =========================================================================
+    # FANTASY/MYTHICAL ARCHETYPES
+    # =========================================================================
+
+    CreatureArchetype.DEMON: {
+        "name": "Demon",
+        "description": "Demonic creature with horns, wings, and tail",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "leg_left", "leg_right"],
+        "optional_parts": ["horns", "wings", "tail", "cloven_hooves"],
+        "animations": [
+            "idle_breathe", "idle_menace", "idle_flame", "idle",
+            "walk", "run", "fly", "hover",
+            "attack_slash", "attack_fireball", "attack_grab", "attack_tail_whip",
+            "hit_light", "hit_heavy",
+            "death_banish", "death",
+            "special_summon", "special_hellfire", "special_corrupt", "special_possess",
+            "spawn", "taunt", "laugh",
+            "cast_debuff", "cast_buff", "channel"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.ANGEL: {
+        "name": "Angel",
+        "description": "Celestial being with wings and halo",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "leg_left", "leg_right",
+                          "wing_left", "wing_right"],
+        "optional_parts": ["halo", "sword", "shield", "robes"],
+        "animations": [
+            "idle_breathe", "idle_pray", "idle_glow", "idle",
+            "walk", "fly", "hover", "glide", "descend", "ascend",
+            "attack_smite", "attack_sword", "attack_light_beam",
+            "hit_light", "hit_heavy",
+            "death_ascend", "death",
+            "special_blessing", "special_holy_light", "special_resurrect",
+            "spawn", "victory",
+            "cast_heal", "cast_buff", "channel"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "wing_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 4},
+            "wing_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 4},
+        }
+    },
+
+    CreatureArchetype.UNDEAD: {
+        "name": "Undead",
+        "description": "Zombie, lich, ghoul, revenant",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "leg_left", "leg_right"],
+        "optional_parts": ["jaw", "ribs", "entrails", "weapon"],
+        "animations": [
+            "idle_sway", "idle_moan", "idle",
+            "shamble", "lurch", "crawl",
+            "attack_bite", "attack_claw", "attack_grab",
+            "hit_light", "hit_heavy", "hit_limb_off",
+            "death_collapse", "death_crumble", "death",
+            "special_rise", "special_infect", "special_scream",
+            "spawn"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.SKELETAL, "parent": "torso"},
+            "torso": {"type": PartType.SKELETAL, "parent": "root"},
+            "arm_left": {"type": PartType.SKELETAL, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.SKELETAL, "parent": "torso", "bones": 3},
+            "leg_left": {"type": PartType.SKELETAL, "parent": "torso", "bones": 3},
+            "leg_right": {"type": PartType.SKELETAL, "parent": "torso", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.SPECTRAL: {
+        "name": "Spectral/Ghost",
+        "description": "Ghost, wraith, phantom (transparent, floaty)",
+        "expected_parts": ["head", "body", "arm_left", "arm_right"],
+        "optional_parts": ["trail", "chains", "lantern"],
+        "animations": [
+            "idle_float", "idle_flicker", "idle_wail", "idle",
+            "drift", "phase", "vanish", "appear",
+            "attack_chill_touch", "attack_possess", "attack_scream",
+            "hit_light", "hit_disperse",
+            "death_disperse", "death",
+            "special_haunt", "special_curse", "special_phase_through",
+            "spawn"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.FLOATING, "parent": "body"},
+            "body": {"type": PartType.FLOATING, "parent": "root"},
+            "arm_left": {"type": PartType.SOFT_HAIR, "parent": "body", "bones": 3},
+            "arm_right": {"type": PartType.SOFT_HAIR, "parent": "body", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.ELEMENTAL: {
+        "name": "Elemental",
+        "description": "Fire, water, earth, or air elemental being",
+        "expected_parts": ["core", "body"],
+        "optional_parts": ["arm_left", "arm_right", "aura", "particles"],
+        "animations": [
+            "idle_pulse", "idle_swirl", "idle_crackle", "idle",
+            "move", "surge", "dissipate", "reform",
+            "attack_blast", "attack_wave", "attack_slam",
+            "hit_light", "hit_scatter",
+            "death_disperse", "death",
+            "special_elemental_fury", "special_absorb", "special_transform",
+            "spawn"
+        ],
+        "bone_config": {
+            "core": {"type": PartType.FLOATING, "parent": "body"},
+            "body": {"type": PartType.FLOATING, "parent": "root"},
+        }
+    },
+
+    # =========================================================================
+    # ABERRANT ARCHETYPES
+    # =========================================================================
+
+    CreatureArchetype.SLIME: {
+        "name": "Slime/Ooze",
+        "description": "Formless blob with no skeleton",
+        "expected_parts": ["body"],
+        "optional_parts": ["core", "eye", "pseudopod"],
+        "animations": [
+            "idle_wobble", "idle_bubble", "idle_pulse", "idle",
+            "ooze", "bounce", "split", "merge",
+            "attack_engulf", "attack_spit", "attack_pseudopod",
+            "hit_wobble", "hit_splash",
+            "death_splat", "death_evaporate", "death",
+            "special_divide", "special_absorb", "special_acid_pool",
+            "spawn"
+        ],
+        "bone_config": {
+            "body": {"type": PartType.FLOATING, "parent": "root"},
+        }
+    },
+
+    CreatureArchetype.TENTACLE_BEAST: {
+        "name": "Tentacle Beast",
+        "description": "Primarily tentacles (octopus, kraken, mind flayer)",
+        "expected_parts": ["head", "body"],
+        "optional_parts": ["beak", "eye"],
+        "tentacle_count": 8,
+        "animations": [
+            "idle_writhe", "idle_pulse", "idle",
+            "crawl", "swim", "jet",
+            "attack_grab", "attack_slam", "attack_constrict", "attack_ink",
+            "hit_light", "hit_heavy",
+            "death_collapse", "death",
+            "special_hypnotize", "special_ink_cloud", "special_regenerate",
+            "spawn"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "body": {"type": PartType.RIGID_CORE, "parent": "root"},
+        }
+    },
+
+    CreatureArchetype.MULTI_HEAD: {
+        "name": "Multi-Headed",
+        "description": "Hydra, Cerberus, Ettin (multiple heads)",
+        "expected_parts": ["head_1", "head_2", "head_3", "body",
+                          "leg_front_left", "leg_front_right", "leg_back_left", "leg_back_right"],
+        "optional_parts": ["head_4", "head_5", "tail", "wings"],
+        "head_count": 3,
+        "animations": [
+            "idle_breathe", "idle_heads_argue", "idle_heads_sync", "idle",
+            "walk", "run",
+            "attack_bite_1", "attack_bite_2", "attack_bite_3", "attack_bite_all",
+            "attack_breath", "attack_pounce",
+            "hit_light", "hit_heavy", "hit_head_severed",
+            "death_collapse", "death",
+            "special_head_regrow", "special_synchronized_roar",
+            "spawn", "taunt"
+        ],
+        "bone_config": {
+            "head_1": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "head_2": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "head_3": {"type": PartType.RIGID_CORE, "parent": "body"},
+            "body": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "leg_front_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_front_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_left": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+            "leg_back_right": {"type": PartType.RIGID_LIMB, "parent": "body", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.CYCLOPS: {
+        "name": "Cyclops",
+        "description": "One-eyed giant",
+        "expected_parts": ["head", "eye", "torso", "arm_left", "arm_right", "leg_left", "leg_right"],
+        "optional_parts": ["club", "armor", "beard"],
+        "animations": [
+            "idle_breathe", "idle_look", "idle",
+            "walk", "stomp",
+            "attack_club_smash", "attack_throw", "attack_grab", "attack_kick",
+            "hit_light", "hit_heavy", "hit_eye",
+            "death_fall", "death",
+            "special_roar", "special_ground_pound", "special_boulder_throw",
+            "spawn", "taunt"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "eye": {"type": PartType.RIGID_CORE, "parent": "head"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+        },
+        "animation_speed_mult": 0.7
+    },
+
+    CreatureArchetype.SWARM: {
+        "name": "Swarm",
+        "description": "Colony of small creatures (bees, rats, bats)",
+        "expected_parts": ["swarm_core"],
+        "optional_parts": ["outliers"],
+        "swarm_count": 20,
+        "animations": [
+            "idle_buzz", "idle_swirl", "idle",
+            "move", "scatter", "reform", "expand", "contract",
+            "attack_engulf", "attack_sting", "attack_bite_swarm",
+            "hit_disperse", "hit_reform",
+            "death_scatter", "death",
+            "special_frenzy", "special_infest",
+            "spawn"
+        ],
+        "bone_config": {
+            "swarm_core": {"type": PartType.FLOATING, "parent": "root"},
+        }
+    },
+
+    # =========================================================================
+    # CONSTRUCT/OTHER ARCHETYPES
+    # =========================================================================
+
+    CreatureArchetype.MECHANICAL: {
+        "name": "Mechanical/Construct",
+        "description": "Robot, golem, clockwork creature",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "leg_left", "leg_right"],
+        "optional_parts": ["gears", "steam", "weapons", "shield"],
+        "animations": [
+            "idle_hum", "idle_scan", "idle",
+            "walk", "run", "stomp",
+            "attack_punch", "attack_laser", "attack_missiles", "attack_spin",
+            "hit_light", "hit_spark", "hit_malfunction",
+            "death_explode", "death_shutdown", "death",
+            "special_transform", "special_overcharge", "special_repair",
+            "spawn", "activate", "deactivate"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+            "leg_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.CRYSTALLINE: {
+        "name": "Crystalline",
+        "description": "Crystal or gem creature",
+        "expected_parts": ["core", "crystal_1", "crystal_2", "crystal_3"],
+        "optional_parts": ["crystal_4", "crystal_5", "aura"],
+        "animations": [
+            "idle_pulse", "idle_shimmer", "idle",
+            "float", "glide",
+            "attack_shard", "attack_beam", "attack_shatter",
+            "hit_crack", "hit_chip",
+            "death_shatter", "death",
+            "special_reflect", "special_grow", "special_refract",
+            "spawn"
+        ],
+        "bone_config": {
+            "core": {"type": PartType.FLOATING, "parent": "root"},
+            "crystal_1": {"type": PartType.RIGID_CORE, "parent": "core"},
+            "crystal_2": {"type": PartType.RIGID_CORE, "parent": "core"},
+            "crystal_3": {"type": PartType.RIGID_CORE, "parent": "core"},
+        }
+    },
+
+    CreatureArchetype.FUNGAL: {
+        "name": "Fungal/Mushroom",
+        "description": "Mushroom creature, myconid",
+        "expected_parts": ["cap", "stem", "arm_left", "arm_right"],
+        "optional_parts": ["spores", "tendrils", "smaller_caps"],
+        "animations": [
+            "idle_breathe", "idle_sway", "idle_spore", "idle",
+            "waddle", "root", "uproot",
+            "attack_spore_cloud", "attack_slam", "attack_tendril",
+            "hit_light", "hit_puff",
+            "death_collapse", "death_spore_burst", "death",
+            "special_infect", "special_spread", "special_heal_aura",
+            "spawn"
+        ],
+        "bone_config": {
+            "cap": {"type": PartType.RIGID_CORE, "parent": "stem"},
+            "stem": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "arm_left": {"type": PartType.SOFT_TENTACLE, "parent": "stem", "bones": 3},
+            "arm_right": {"type": PartType.SOFT_TENTACLE, "parent": "stem", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.PLANT: {
+        "name": "Plant/Treant",
+        "description": "Treant, vine creature, plant monster",
+        "expected_parts": ["head", "trunk", "branch_left", "branch_right", "root_left", "root_right"],
+        "optional_parts": ["leaves", "flowers", "vines", "fruit"],
+        "animations": [
+            "idle_sway", "idle_rustle", "idle",
+            "walk", "root", "uproot",
+            "attack_branch_slam", "attack_vine_whip", "attack_root_grab",
+            "hit_light", "hit_chip",
+            "death_wilt", "death_topple", "death",
+            "special_entangle", "special_bloom", "special_thorns",
+            "spawn"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "trunk"},
+            "trunk": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "branch_left": {"type": PartType.RIGID_LIMB, "parent": "trunk", "bones": 4},
+            "branch_right": {"type": PartType.RIGID_LIMB, "parent": "trunk", "bones": 4},
+            "root_left": {"type": PartType.SOFT_TENTACLE, "parent": "trunk", "bones": 3},
+            "root_right": {"type": PartType.SOFT_TENTACLE, "parent": "trunk", "bones": 3},
+        }
+    },
+
+    CreatureArchetype.SHADOW: {
+        "name": "Shadow",
+        "description": "Shadow being, living darkness",
+        "expected_parts": ["body"],
+        "optional_parts": ["tendrils", "eyes", "claws"],
+        "animations": [
+            "idle_flicker", "idle_undulate", "idle",
+            "glide", "sink", "rise", "teleport",
+            "attack_claw", "attack_engulf", "attack_drain",
+            "hit_disperse", "hit_reform",
+            "death_fade", "death",
+            "special_possess", "special_darkness", "special_fear",
+            "spawn"
+        ],
+        "bone_config": {
+            "body": {"type": PartType.FLOATING, "parent": "root"},
+        }
+    },
+
+    CreatureArchetype.COLOSSUS: {
+        "name": "Colossus",
+        "description": "Massive scale creature (building-sized)",
+        "expected_parts": ["head", "torso", "arm_left", "arm_right", "leg_left", "leg_right"],
+        "optional_parts": ["armor_plates", "weapon", "crystals"],
+        "animations": [
+            "idle_breathe", "idle_rumble", "idle",
+            "walk", "stomp",
+            "attack_slam", "attack_sweep", "attack_stomp", "attack_beam",
+            "hit_light", "hit_heavy", "hit_stagger",
+            "death_collapse", "death_crumble", "death",
+            "special_roar", "special_earthquake", "special_summon_minions",
+            "spawn", "rise"
+        ],
+        "bone_config": {
+            "head": {"type": PartType.RIGID_CORE, "parent": "torso"},
+            "torso": {"type": PartType.RIGID_CORE, "parent": "root"},
+            "arm_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 4},
+            "arm_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 4},
+            "leg_left": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 4},
+            "leg_right": {"type": PartType.RIGID_LIMB, "parent": "torso", "bones": 4},
+        },
+        "animation_speed_mult": 0.5
+    },
+
+    CreatureArchetype.PARASITIC: {
+        "name": "Parasitic",
+        "description": "Attaches to host creature",
+        "expected_parts": ["body", "attachment_point"],
+        "optional_parts": ["tendrils", "mouth", "eye"],
+        "animations": [
+            "idle_pulse", "idle_feed", "idle",
+            "crawl", "attach", "detach",
+            "attack_drain", "attack_control", "attack_infect",
+            "hit_light", "hit_detach",
+            "death_shrivel", "death",
+            "special_mind_control", "special_spread", "special_burst",
+            "spawn"
+        ],
+        "bone_config": {
+            "body": {"type": PartType.SOFT_TENTACLE, "parent": "attachment_point"},
+            "attachment_point": {"type": PartType.RIGID_CORE, "parent": "root"},
+        }
+    },
+
+    CreatureArchetype.MIMIC: {
+        "name": "Mimic",
+        "description": "Shapeshifter base form",
+        "expected_parts": ["body", "mouth"],
+        "optional_parts": ["tongue", "teeth", "eyes", "pseudopods"],
+        "animations": [
+            "idle_still", "idle_subtle_move", "idle",
+            "transform_in", "transform_out",
+            "attack_bite", "attack_tongue", "attack_pseudopod",
+            "hit_light", "hit_reveal",
+            "death_melt", "death",
+            "special_disguise", "special_ambush", "special_adapt",
+            "spawn"
+        ],
+        "bone_config": {
+            "body": {"type": PartType.FLOATING, "parent": "root"},
+            "mouth": {"type": PartType.RIGID_CORE, "parent": "body"},
+        }
+    },
+
+    # =========================================================================
+    # FALLBACK
+    # =========================================================================
+
     CreatureArchetype.CUSTOM: {
         "name": "Custom Creature",
         "description": "User-defined creature with custom parts",
@@ -509,37 +1196,234 @@ class SpineRigBuilder:
         return output_path
     
     def _parse_archetype(self, archetype: str) -> CreatureArchetype:
-        """Parse archetype string to enum"""
+        """Parse archetype string to enum - supports all 39 creature types"""
         arch_map = {
+            # === STANDARD ARCHETYPES ===
             "humanoid": CreatureArchetype.HUMANOID,
             "human": CreatureArchetype.HUMANOID,
+            "bipedal": CreatureArchetype.HUMANOID,
+            "person": CreatureArchetype.HUMANOID,
+
             "multi_arm": CreatureArchetype.MULTI_ARM,
             "multiarm": CreatureArchetype.MULTI_ARM,
             "multi-arm": CreatureArchetype.MULTI_ARM,
+            "many_arms": CreatureArchetype.MULTI_ARM,
+
             "quadruped": CreatureArchetype.QUADRUPED,
             "quad": CreatureArchetype.QUADRUPED,
+            "fourleg": CreatureArchetype.QUADRUPED,
+            "four_legs": CreatureArchetype.QUADRUPED,
+            "wolf": CreatureArchetype.QUADRUPED,
+            "horse": CreatureArchetype.QUADRUPED,
+            "dog": CreatureArchetype.QUADRUPED,
+            "cat": CreatureArchetype.QUADRUPED,
+            "bear": CreatureArchetype.QUADRUPED,
+            "lion": CreatureArchetype.QUADRUPED,
+
             "serpent": CreatureArchetype.SERPENT,
             "snake": CreatureArchetype.SERPENT,
             "wyrm": CreatureArchetype.SERPENT,
+            "eel": CreatureArchetype.SERPENT,
+
             "skeleton": CreatureArchetype.SKELETON,
-            "undead": CreatureArchetype.SKELETON,
+            "bones": CreatureArchetype.SKELETON,
+            "skeletal": CreatureArchetype.SKELETON,
+
             "floating": CreatureArchetype.FLOATING,
-            "ghost": CreatureArchetype.FLOATING,
-            "spectral": CreatureArchetype.FLOATING,
+            "wisp": CreatureArchetype.FLOATING,
+            "orb": CreatureArchetype.FLOATING,
+            "eye": CreatureArchetype.FLOATING,
+
             "giant": CreatureArchetype.GIANT,
             "titan": CreatureArchetype.GIANT,
+            "ogre": CreatureArchetype.GIANT,
+            "troll": CreatureArchetype.GIANT,
+
             "insectoid": CreatureArchetype.INSECTOID,
             "insect": CreatureArchetype.INSECTOID,
-            "spider": CreatureArchetype.INSECTOID,
+            "beetle": CreatureArchetype.INSECTOID,
+            "mantis": CreatureArchetype.INSECTOID,
+            "ant": CreatureArchetype.INSECTOID,
+
             "winged": CreatureArchetype.WINGED,
-            "dragon": CreatureArchetype.WINGED,
+            "bat": CreatureArchetype.WINGED,
+            "wyvern": CreatureArchetype.WINGED,
+
+            "aquatic": CreatureArchetype.AQUATIC,
+            "fish": CreatureArchetype.AQUATIC,
+            "shark": CreatureArchetype.AQUATIC,
+            "sea": CreatureArchetype.AQUATIC,
+
             "eldritch": CreatureArchetype.ELDRITCH,
             "cosmic": CreatureArchetype.ELDRITCH,
             "lovecraft": CreatureArchetype.ELDRITCH,
-            "aquatic": CreatureArchetype.AQUATIC,
-            "fish": CreatureArchetype.AQUATIC,
-            "mermaid": CreatureArchetype.AQUATIC,
-            "sea": CreatureArchetype.AQUATIC,
+            "aberration": CreatureArchetype.ELDRITCH,
+            "horror": CreatureArchetype.ELDRITCH,
+
+            # === HYBRID ARCHETYPES ===
+            "centaur": CreatureArchetype.CENTAUR,
+            "horseman": CreatureArchetype.CENTAUR,
+
+            "naga": CreatureArchetype.NAGA,
+            "lamia": CreatureArchetype.NAGA,
+            "medusa": CreatureArchetype.NAGA,
+            "yuan-ti": CreatureArchetype.NAGA,
+
+            "mermaid": CreatureArchetype.MERMAID,
+            "merman": CreatureArchetype.MERMAID,
+            "siren": CreatureArchetype.MERMAID,
+            "merfolk": CreatureArchetype.MERMAID,
+
+            "chimera": CreatureArchetype.CHIMERA,
+            "hybrid": CreatureArchetype.CHIMERA,
+            "mixed": CreatureArchetype.CHIMERA,
+            "manticore": CreatureArchetype.CHIMERA,
+
+            # === CREATURE-SPECIFIC ===
+            "arachnid": CreatureArchetype.ARACHNID,
+            "spider": CreatureArchetype.ARACHNID,
+            "scorpion": CreatureArchetype.ARACHNID,
+            "tarantula": CreatureArchetype.ARACHNID,
+
+            "avian": CreatureArchetype.AVIAN,
+            "bird": CreatureArchetype.AVIAN,
+            "harpy": CreatureArchetype.AVIAN,
+            "phoenix": CreatureArchetype.AVIAN,
+            "roc": CreatureArchetype.AVIAN,
+
+            "amphibian": CreatureArchetype.AMPHIBIAN,
+            "frog": CreatureArchetype.AMPHIBIAN,
+            "toad": CreatureArchetype.AMPHIBIAN,
+            "salamander": CreatureArchetype.AMPHIBIAN,
+            "newt": CreatureArchetype.AMPHIBIAN,
+
+            "crustacean": CreatureArchetype.CRUSTACEAN,
+            "crab": CreatureArchetype.CRUSTACEAN,
+            "lobster": CreatureArchetype.CRUSTACEAN,
+            "shrimp": CreatureArchetype.CRUSTACEAN,
+
+            "worm": CreatureArchetype.WORM,
+            "caterpillar": CreatureArchetype.WORM,
+            "centipede": CreatureArchetype.WORM,
+            "millipede": CreatureArchetype.WORM,
+            "leech": CreatureArchetype.WORM,
+
+            "dragon": CreatureArchetype.DRAGON,
+            "drake": CreatureArchetype.DRAGON,
+            "lindworm": CreatureArchetype.DRAGON,
+
+            # === FANTASY/MYTHICAL ===
+            "demon": CreatureArchetype.DEMON,
+            "devil": CreatureArchetype.DEMON,
+            "fiend": CreatureArchetype.DEMON,
+            "imp": CreatureArchetype.DEMON,
+            "succubus": CreatureArchetype.DEMON,
+
+            "angel": CreatureArchetype.ANGEL,
+            "seraph": CreatureArchetype.ANGEL,
+            "cherub": CreatureArchetype.ANGEL,
+            "celestial": CreatureArchetype.ANGEL,
+
+            "undead": CreatureArchetype.UNDEAD,
+            "zombie": CreatureArchetype.UNDEAD,
+            "lich": CreatureArchetype.UNDEAD,
+            "ghoul": CreatureArchetype.UNDEAD,
+            "revenant": CreatureArchetype.UNDEAD,
+            "draugr": CreatureArchetype.UNDEAD,
+
+            "spectral": CreatureArchetype.SPECTRAL,
+            "ghost": CreatureArchetype.SPECTRAL,
+            "wraith": CreatureArchetype.SPECTRAL,
+            "specter": CreatureArchetype.SPECTRAL,
+            "phantom": CreatureArchetype.SPECTRAL,
+            "banshee": CreatureArchetype.SPECTRAL,
+
+            "elemental": CreatureArchetype.ELEMENTAL,
+            "fire_elemental": CreatureArchetype.ELEMENTAL,
+            "water_elemental": CreatureArchetype.ELEMENTAL,
+            "earth_elemental": CreatureArchetype.ELEMENTAL,
+            "air_elemental": CreatureArchetype.ELEMENTAL,
+            "djinn": CreatureArchetype.ELEMENTAL,
+            "genie": CreatureArchetype.ELEMENTAL,
+
+            # === ABERRANT ===
+            "slime": CreatureArchetype.SLIME,
+            "ooze": CreatureArchetype.SLIME,
+            "blob": CreatureArchetype.SLIME,
+            "jelly": CreatureArchetype.SLIME,
+            "gelatinous": CreatureArchetype.SLIME,
+            "pudding": CreatureArchetype.SLIME,
+
+            "tentacle_beast": CreatureArchetype.TENTACLE_BEAST,
+            "octopus": CreatureArchetype.TENTACLE_BEAST,
+            "kraken": CreatureArchetype.TENTACLE_BEAST,
+            "squid": CreatureArchetype.TENTACLE_BEAST,
+            "cthulhu": CreatureArchetype.TENTACLE_BEAST,
+
+            "multi_head": CreatureArchetype.MULTI_HEAD,
+            "hydra": CreatureArchetype.MULTI_HEAD,
+            "cerberus": CreatureArchetype.MULTI_HEAD,
+            "ettin": CreatureArchetype.MULTI_HEAD,
+
+            "cyclops": CreatureArchetype.CYCLOPS,
+            "one_eye": CreatureArchetype.CYCLOPS,
+            "monoptic": CreatureArchetype.CYCLOPS,
+
+            "swarm": CreatureArchetype.SWARM,
+            "bees": CreatureArchetype.SWARM,
+            "rats": CreatureArchetype.SWARM,
+            "bats": CreatureArchetype.SWARM,
+            "locusts": CreatureArchetype.SWARM,
+            "hive": CreatureArchetype.SWARM,
+
+            # === CONSTRUCT/OTHER ===
+            "mechanical": CreatureArchetype.MECHANICAL,
+            "robot": CreatureArchetype.MECHANICAL,
+            "golem": CreatureArchetype.MECHANICAL,
+            "construct": CreatureArchetype.MECHANICAL,
+            "automaton": CreatureArchetype.MECHANICAL,
+            "clockwork": CreatureArchetype.MECHANICAL,
+
+            "crystalline": CreatureArchetype.CRYSTALLINE,
+            "crystal": CreatureArchetype.CRYSTALLINE,
+            "gem": CreatureArchetype.CRYSTALLINE,
+            "geode": CreatureArchetype.CRYSTALLINE,
+
+            "fungal": CreatureArchetype.FUNGAL,
+            "mushroom": CreatureArchetype.FUNGAL,
+            "myconid": CreatureArchetype.FUNGAL,
+            "shroom": CreatureArchetype.FUNGAL,
+            "fungus": CreatureArchetype.FUNGAL,
+
+            "plant": CreatureArchetype.PLANT,
+            "treant": CreatureArchetype.PLANT,
+            "ent": CreatureArchetype.PLANT,
+            "vine": CreatureArchetype.PLANT,
+            "dryad": CreatureArchetype.PLANT,
+            "floral": CreatureArchetype.PLANT,
+
+            "shadow": CreatureArchetype.SHADOW,
+            "shade": CreatureArchetype.SHADOW,
+            "darkness": CreatureArchetype.SHADOW,
+            "nightshade": CreatureArchetype.SHADOW,
+
+            "colossus": CreatureArchetype.COLOSSUS,
+            "kaiju": CreatureArchetype.COLOSSUS,
+            "behemoth": CreatureArchetype.COLOSSUS,
+            "leviathan": CreatureArchetype.COLOSSUS,
+            "tarrasque": CreatureArchetype.COLOSSUS,
+
+            "parasitic": CreatureArchetype.PARASITIC,
+            "parasite": CreatureArchetype.PARASITIC,
+            "symbiote": CreatureArchetype.PARASITIC,
+            "facehugger": CreatureArchetype.PARASITIC,
+
+            "mimic": CreatureArchetype.MIMIC,
+            "shapeshifter": CreatureArchetype.MIMIC,
+            "doppelganger": CreatureArchetype.MIMIC,
+            "changeling": CreatureArchetype.MIMIC,
+
+            # === FALLBACK ===
             "custom": CreatureArchetype.CUSTOM,
         }
         return arch_map.get(archetype.lower(), CreatureArchetype.HUMANOID)
