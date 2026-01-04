@@ -304,12 +304,13 @@ def add_missing_part(part_name: str):
         return create_visualization(), f"Error adding part: {e}", get_parts_summary()
 
 
-def export_rig(monster_name: str, selected_animations: list):
-    """Build skeleton, generate ONLY selected animations, export everything"""
+def export_rig(monster_name: str, archetype: str, selected_animations: list):
+    """Build skeleton with proper archetype, generate selected animations, export everything"""
     if STATE.rigger is None or len(STATE.rigger.get_parts()) == 0:
         return "⚠️ No parts detected! Run Smart Scan first.", None
 
     rig_only = len(selected_animations) == 0
+    arch_key = ARCHETYPE_MAP.get(archetype, "humanoid")
 
     if not monster_name or not monster_name.strip():
         monster_name = "monster"
@@ -332,11 +333,11 @@ def export_rig(monster_name: str, selected_animations: list):
             arm_count = len([p for p in part_names if 'arm' in p])
             leg_count = len([p for p in part_names if 'leg' in p])
 
-            # BUILD THE SKELETON (always humanoid base - works for most monsters)
+            # BUILD THE SKELETON with correct archetype
             builder = SpineRigBuilder()
             spine_data = builder.build_rig(
                 parts=parts,
-                archetype="humanoid",
+                archetype=arch_key,
                 rig_name=monster_name,
                 arm_count=max(2, arm_count),
                 leg_count=max(2, leg_count),
@@ -383,15 +384,17 @@ def export_rig(monster_name: str, selected_animations: list):
             # Build detailed status message
             if rig_only:
                 status_lines = [
-                    f"✅ BUILT: {monster_name} (RIG ONLY)",
+                    f"✅ BUILT: {monster_name}",
+                    f"🎭 Archetype: {archetype} (skeleton structure)",
                     f"🦴 Skeleton: {bone_count} bones, {slot_count} slots",
                     f"📁 Parts: {exported_parts} PNG images",
                     f"",
-                    f"No animations - add your own in Spine/Godot!"
+                    f"RIG ONLY - Add your own animations in Spine/Godot!"
                 ]
             else:
                 status_lines = [
                     f"✅ BUILT: {monster_name}",
+                    f"🎭 Archetype: {archetype}",
                     f"🦴 Skeleton: {bone_count} bones, {slot_count} slots",
                     f"🎬 Animations: {anim_count} ({', '.join(anim_names[:5])}{'...' if len(anim_names) > 5 else ''})",
                     f"📁 Parts: {exported_parts} PNG images",
@@ -446,8 +449,40 @@ def get_all_available_animations() -> list:
         return ["idle", "walk", "run", "attack", "hurt", "die"]
 
 
+def get_archetype_animations(archetype: str) -> list:
+    """Get animations for a specific archetype"""
+    if not ANIMATION_AVAILABLE:
+        return ["idle", "walk", "run", "attack", "hurt", "die"]
+
+    arch_key = ARCHETYPE_MAP.get(archetype, "humanoid")
+
+    try:
+        from spine_rig_builder import ARCHETYPE_CONFIGS, CreatureArchetype
+        # Find the matching archetype enum
+        for arch_enum, config in ARCHETYPE_CONFIGS.items():
+            if arch_enum.name.lower() == arch_key or arch_key in arch_enum.name.lower():
+                return config.get("animations", [])
+        # Default to humanoid
+        return ARCHETYPE_CONFIGS.get(CreatureArchetype.HUMANOID, {}).get("animations", [])
+    except:
+        return ["idle", "walk", "run", "attack", "hurt", "die"]
+
+
 # Global list of selected animations
 SELECTED_ANIMATIONS = []
+
+
+def add_all_for_archetype(archetype: str) -> tuple:
+    """Add ALL animations for the selected archetype"""
+    global SELECTED_ANIMATIONS
+
+    anims = get_archetype_animations(archetype)
+    for anim in anims:
+        if anim not in SELECTED_ANIMATIONS:
+            SELECTED_ANIMATIONS.append(anim)
+
+    list_text = ", ".join(SELECTED_ANIMATIONS) if SELECTED_ANIMATIONS else "(none)"
+    return list_text, f"✓ Added ALL {len(anims)} animations for {archetype}! Total: {len(SELECTED_ANIMATIONS)}"
 
 
 def add_animation(anim_name: str, current_list: str) -> tuple:
@@ -457,12 +492,11 @@ def add_animation(anim_name: str, current_list: str) -> tuple:
     if not anim_name or not anim_name.strip():
         return current_list, gr.update(value=""), f"Currently selected: {len(SELECTED_ANIMATIONS)} animations"
 
-    anim_name = anim_name.strip().lower()
+    anim_name = anim_name.strip()
 
     if anim_name not in SELECTED_ANIMATIONS:
         SELECTED_ANIMATIONS.append(anim_name)
 
-    # Format the list nicely
     list_text = ", ".join(SELECTED_ANIMATIONS) if SELECTED_ANIMATIONS else "(none)"
     return list_text, gr.update(value=""), f"✓ Added '{anim_name}' - Total: {len(SELECTED_ANIMATIONS)} animations"
 
@@ -474,7 +508,7 @@ def remove_animation(anim_name: str, current_list: str) -> tuple:
     if not anim_name or not anim_name.strip():
         return current_list, f"Currently selected: {len(SELECTED_ANIMATIONS)} animations"
 
-    anim_name = anim_name.strip().lower()
+    anim_name = anim_name.strip()
 
     if anim_name in SELECTED_ANIMATIONS:
         SELECTED_ANIMATIONS.remove(anim_name)
@@ -576,8 +610,22 @@ def create_ui():
 
                 monster_name = gr.Textbox(label="Monster Name", placeholder="my_monster")
 
+                # ARCHETYPE SELECTION - Critical for proper rigging!
+                gr.Markdown("### Creature Type (determines skeleton)")
+                archetype_dropdown = gr.Dropdown(
+                    choices=ARCHETYPES,
+                    value=ARCHETYPES[0] if ARCHETYPES else "Humanoid",
+                    label="Archetype",
+                    info="IMPORTANT: Pick the right type for correct bone structure!"
+                )
+
                 gr.Markdown("---")
                 gr.Markdown("### 🎬 Build Your Animation List")
+
+                # Quick-add buttons
+                with gr.Row():
+                    add_all_btn = gr.Button("⭐ ADD ALL ANIMATIONS", variant="primary", size="sm")
+                    clear_anims_btn = gr.Button("Clear All", variant="stop", size="sm")
 
                 # Quick-add common sets
                 anim_sets = gr.Dropdown(
@@ -606,13 +654,12 @@ def create_ui():
 
                 with gr.Row():
                     add_anim_btn = gr.Button("+ Add", variant="primary", size="sm")
-                    remove_anim_btn = gr.Button("- Remove", variant="stop", size="sm")
-                    clear_anims_btn = gr.Button("Clear All", size="sm")
+                    remove_anim_btn = gr.Button("- Remove", size="sm")
 
                 # Show current list
                 gr.Markdown("**Your animations:**")
                 anim_list_display = gr.Textbox(
-                    value="(none - add some above!)",
+                    value="(none - click 'ADD ALL' or add individually)",
                     label="",
                     interactive=False,
                     lines=3
@@ -658,6 +705,12 @@ def create_ui():
         )
 
         # Animation list building
+        add_all_btn.click(
+            fn=add_all_for_archetype,
+            inputs=[archetype_dropdown],
+            outputs=[anim_list_display, anim_status]
+        )
+
         add_set_btn.click(
             fn=add_common_set,
             inputs=[anim_sets, anim_list_display],
@@ -681,17 +734,17 @@ def create_ui():
             outputs=[anim_list_display, anim_status]
         )
 
-        # BUILD RIG + ANIMATIONS
+        # BUILD RIG + ANIMATIONS (with archetype!)
         export_btn.click(
-            fn=lambda name: export_rig(name, SELECTED_ANIMATIONS),
-            inputs=[monster_name],
+            fn=lambda name, arch: export_rig(name, arch, SELECTED_ANIMATIONS),
+            inputs=[monster_name, archetype_dropdown],
             outputs=[export_status, download]
         )
 
-        # RIG ONLY (no animations)
+        # RIG ONLY (no animations, but still uses archetype for bone structure!)
         export_rig_only_btn.click(
-            fn=lambda name: export_rig(name, []),  # Empty list = no animations
-            inputs=[monster_name],
+            fn=lambda name, arch: export_rig(name, arch, []),
+            inputs=[monster_name, archetype_dropdown],
             outputs=[export_status, download]
         )
 
