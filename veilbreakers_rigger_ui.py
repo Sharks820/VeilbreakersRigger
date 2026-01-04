@@ -305,9 +305,9 @@ def add_missing_part(part_name: str):
 
 
 def export_rig(monster_name: str, archetype: str):
-    """Export the rig with animations"""
+    """Build skeleton, generate animations, export everything"""
     if STATE.rigger is None or len(STATE.rigger.get_parts()) == 0:
-        return "No parts to export. Run Smart Scan first.", None
+        return "⚠️ No parts detected! Run Smart Scan first.", None
 
     if not monster_name or not monster_name.strip():
         monster_name = "monster"
@@ -325,17 +325,16 @@ def export_rig(monster_name: str, archetype: str):
 
             # Get parts info
             parts = STATE.rigger.get_parts()
-
-            # Build the Spine rig
-            builder = SpineRigBuilder()
-
-            # Detect features from parts
             part_names = [p.name.lower() for p in parts]
+
+            # Detect creature features from parts
             has_tail = any('tail' in p for p in part_names)
             has_wings = any('wing' in p for p in part_names)
             arm_count = len([p for p in part_names if 'arm' in p])
             leg_count = len([p for p in part_names if 'leg' in p])
 
+            # BUILD THE SKELETON
+            builder = SpineRigBuilder()
             spine_data = builder.build_rig(
                 parts=parts,
                 archetype=arch_key,
@@ -346,28 +345,45 @@ def export_rig(monster_name: str, archetype: str):
                 has_wings=has_wings
             )
 
+            # Count what we built
+            bone_count = len(spine_data.get('bones', []))
+            slot_count = len(spine_data.get('slots', []))
+            anim_count = len(spine_data.get('animations', {}))
+            anim_names = list(spine_data.get('animations', {}).keys())
+
             # Save Spine JSON
             output_path = temp_dir / f"{monster_name}_spine.json"
             with open(output_path, 'w') as f:
                 json.dump(spine_data, f, indent=2)
 
-            # Also export part images
+            # Export part images as PNGs
             parts_dir = temp_dir / "parts"
             parts_dir.mkdir(exist_ok=True)
 
+            exported_parts = 0
             for part in parts:
                 if hasattr(part, 'image') and part.image is not None:
                     part_img = Image.fromarray(part.image)
                     part_img.save(parts_dir / f"{part.name}.png")
+                    exported_parts += 1
 
             # Create zip
             zip_path = temp_dir / f"{monster_name}_rig"
             shutil.make_archive(str(zip_path), 'zip', temp_dir)
 
-            anim_count = len(spine_data.get('animations', {}))
-            return f"Exported '{monster_name}' with {len(parts)} parts and {anim_count} animations!", str(zip_path) + ".zip"
+            # Build detailed status message
+            status_lines = [
+                f"✅ BUILT: {monster_name}",
+                f"🦴 Skeleton: {bone_count} bones, {slot_count} slots",
+                f"🎬 Animations: {anim_count} ({', '.join(anim_names[:5])}{'...' if len(anim_names) > 5 else ''})",
+                f"📁 Parts: {exported_parts} PNG images",
+                f"",
+                f"Ready for Godot! Import the Spine JSON."
+            ]
+
+            return "\n".join(status_lines), str(zip_path) + ".zip"
         else:
-            # Basic PNG export
+            # Basic PNG export (no animation system)
             parts_dir = temp_dir / "parts"
             parts_dir.mkdir(exist_ok=True)
 
@@ -379,12 +395,12 @@ def export_rig(monster_name: str, archetype: str):
             zip_path = temp_dir / f"{monster_name}_parts"
             shutil.make_archive(str(zip_path), 'zip', parts_dir)
 
-            return f"Exported {len(STATE.rigger.get_parts())} parts as PNGs", str(zip_path) + ".zip"
+            return f"📁 Exported {len(STATE.rigger.get_parts())} parts as PNGs\n(Animation system not loaded)", str(zip_path) + ".zip"
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return f"Export error: {e}", None
+        return f"❌ Build error: {e}", None
 
 
 def clear_all():
@@ -394,6 +410,41 @@ def clear_all():
     STATE.original_image = None
     STATE.last_scan_parts = []
     return create_visualization(), "Cleared. Upload a new image to start.", ""
+
+
+def get_archetype_preview(archetype: str) -> str:
+    """Show what animations will be generated for this archetype"""
+    if not ANIMATION_AVAILABLE:
+        return "Animation system not loaded"
+
+    arch_key = ARCHETYPE_MAP.get(archetype, "humanoid")
+
+    # Get the config for this archetype
+    try:
+        from spine_rig_builder import ARCHETYPE_CONFIGS
+        config = ARCHETYPE_CONFIGS.get(arch_key, {})
+        anims = config.get("animations", [])
+
+        if not anims:
+            return f"**{archetype}**: Default animations (idle, walk, attack)"
+
+        # Group animations by type
+        lines = [f"**{archetype} Animations ({len(anims)} total):**"]
+
+        # Categorize
+        idles = [a for a in anims if 'idle' in a.lower()]
+        walks = [a for a in anims if 'walk' in a.lower() or 'run' in a.lower() or 'move' in a.lower()]
+        attacks = [a for a in anims if 'attack' in a.lower() or 'strike' in a.lower() or 'bite' in a.lower()]
+        others = [a for a in anims if a not in idles + walks + attacks]
+
+        if idles: lines.append(f"• Idle: {', '.join(idles[:3])}{'...' if len(idles) > 3 else ''}")
+        if walks: lines.append(f"• Movement: {', '.join(walks[:3])}{'...' if len(walks) > 3 else ''}")
+        if attacks: lines.append(f"• Combat: {', '.join(attacks[:3])}{'...' if len(attacks) > 3 else ''}")
+        if others: lines.append(f"• Special: {', '.join(others[:3])}{'...' if len(others) > 3 else ''}")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"**{archetype}**: Standard monster animations"
 
 
 # =============================================================================
@@ -456,17 +507,23 @@ def create_ui():
 
                 gr.Markdown("---")
 
-                # Export
-                gr.Markdown("## Export")
+                # RIG & ANIMATE - Make it OBVIOUS this is where the magic happens
+                gr.Markdown("## 🦴 RIG & ANIMATE")
+                gr.Markdown("*This builds the skeleton + generates all animations!*")
+
                 monster_name = gr.Textbox(label="Monster Name", placeholder="my_monster")
                 archetype = gr.Dropdown(
                     choices=ARCHETYPES,
                     value=ARCHETYPES[0] if ARCHETYPES else "Humanoid",
-                    label="Animation Style"
+                    label="Creature Type (determines animations)"
                 )
-                export_btn = gr.Button("Export Rig", variant="primary")
-                export_status = gr.Textbox(label="Export Status", interactive=False)
-                download = gr.File(label="Download")
+
+                # Show what animations will be generated
+                anim_preview = gr.Markdown("*Select creature type to see animations*")
+
+                export_btn = gr.Button("🎬 BUILD RIG + ANIMATIONS", variant="primary", size="lg")
+                export_status = gr.Textbox(label="Build Status", interactive=False, lines=3)
+                download = gr.File(label="Download Spine JSON + Parts")
 
         # EVENT HANDLERS - Simple!
 
@@ -497,15 +554,25 @@ def create_ui():
             outputs=[main_image, status, parts_display]
         )
 
-        # Export
+        # Archetype selection shows what animations you'll get
+        archetype.change(
+            fn=get_archetype_preview,
+            inputs=[archetype],
+            outputs=[anim_preview]
+        )
+
+        # BUILD RIG + ANIMATIONS
         export_btn.click(
             fn=export_rig,
             inputs=[monster_name, archetype],
             outputs=[export_status, download]
         )
 
-        # Startup message
-        app.load(fn=lambda: "Ready! Upload an image and click 'Smart Scan'", outputs=[status])
+        # Startup - show initial archetype preview
+        app.load(
+            fn=lambda: ("Ready! Upload an image and click 'Smart Scan'", get_archetype_preview(ARCHETYPES[0] if ARCHETYPES else "Humanoid")),
+            outputs=[status, anim_preview]
+        )
 
     return app
 
