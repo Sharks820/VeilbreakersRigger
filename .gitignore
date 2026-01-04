@@ -21,8 +21,12 @@ __pycache__/
 *$py.class
 .Python
 venv/
+venv312/
 env/
 .venv/
+
+# Claude Code
+.claude/
 
 # IDE
 .vscode/
