@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """VEILBREAKERS RIGGER - UNIFIED UI v4.0
 
-Combines all features from:
-- veilbreakers_rigger_ui.py (Professional UI with undo/redo, tabs, exports)
-- working_ui.py (Florence-2 Smart Detect, Segment Browser, Box Selection)
-- simple_rigger_ui.py (Graceful degradation)
+All-in-one interface with:
+- Florence-2 Smart Detection (auto-detect all body parts)
+- Segment Browser (find and browse all segments)
+- Box Selection Mode (click two corners to define regions)
+- Professional UI with undo/redo, tabs, exports
+- Graceful degradation when AI models unavailable
+- Active Learning integration (train AI with your corrections)
 """
 
 import gradio as gr
@@ -16,6 +19,26 @@ import tempfile
 import shutil
 import os
 from typing import Optional, List, Tuple, Dict, Any
+from datetime import datetime
+
+# =============================================================================
+# ACTIVE LEARNING INTEGRATION
+# =============================================================================
+LEARNING_AVAILABLE = True
+try:
+    from training_metrics import generate_learning_report, get_model_status
+except ImportError:
+    LEARNING_AVAILABLE = False
+    def generate_learning_report():
+        return "Training metrics module not found."
+    def get_model_status():
+        return {"finetuned_model_exists": False, "using_model": "base"}
+
+# Training directories
+BASE_DIR = Path(__file__).parent
+TRAINING_DIR = BASE_DIR / "training_data"
+IMAGES_DIR = TRAINING_DIR / "images"
+LABELS_FILE = TRAINING_DIR / "labels.json"
 
 # =============================================================================
 # GRACEFUL DEGRADATION
@@ -676,6 +699,121 @@ def export_rig(monster_name: str, format_choice: str):
 
 
 # =============================================================================
+# ACTIVE LEARNING FUNCTIONS
+# =============================================================================
+
+def get_training_status():
+    """Get current training data status"""
+    TRAINING_DIR.mkdir(parents=True, exist_ok=True)
+    IMAGES_DIR.mkdir(exist_ok=True)
+
+    if LABELS_FILE.exists():
+        with open(LABELS_FILE) as f:
+            data = json.load(f)
+        total_boxes = sum(len(item.get("boxes", [])) for item in data)
+        return f"📊 {len(data)} images labeled, {total_boxes} total boxes"
+    return "📊 No training data yet. Save corrections to start training!"
+
+
+def save_current_as_training(part_name: str):
+    """Save current detection as training data"""
+    if STATE.rigger is None or STATE.rigger.current_rig is None:
+        return "Load an image first"
+
+    if STATE.rigger.current_mask is None:
+        return "No selection to save. Click on the image or use Smart Detect first."
+
+    if not part_name:
+        return "Enter a part name before saving"
+
+    # Ensure directories exist
+    TRAINING_DIR.mkdir(parents=True, exist_ok=True)
+    IMAGES_DIR.mkdir(exist_ok=True)
+
+    # Get original image and mask
+    original = STATE.rigger.current_rig.original_image
+    mask = STATE.rigger.current_mask
+
+    # Calculate bounding box from mask
+    rows = np.any(mask, axis=1)
+    cols = np.any(mask, axis=0)
+    if not rows.any() or not cols.any():
+        return "Invalid mask - no region selected"
+
+    y_min, y_max = np.where(rows)[0][[0, -1]]
+    x_min, x_max = np.where(cols)[0][[0, -1]]
+    bbox = [int(x_min), int(y_min), int(x_max), int(y_max)]
+
+    # Save image
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    img_name = f"training_{timestamp}.png"
+    img_path = IMAGES_DIR / img_name
+    Image.fromarray(original).save(img_path)
+
+    # Load or create labels file
+    if LABELS_FILE.exists():
+        with open(LABELS_FILE) as f:
+            all_labels = json.load(f)
+    else:
+        all_labels = []
+
+    # Check if this image already exists in labels
+    existing = next((item for item in all_labels if item.get("image") == img_name), None)
+    if existing:
+        existing["boxes"].append({"label": part_name.lower(), "bbox": bbox})
+    else:
+        all_labels.append({
+            "image": img_name,
+            "boxes": [{"label": part_name.lower(), "bbox": bbox}]
+        })
+
+    # Save labels
+    with open(LABELS_FILE, "w") as f:
+        json.dump(all_labels, f, indent=2)
+
+    return f"✅ Saved '{part_name}' to training data! Total: {len(all_labels)} images"
+
+
+def train_model_from_ui():
+    """Trigger model training from UI"""
+    import subprocess
+    import sys
+
+    # Check if enough data
+    if not LABELS_FILE.exists():
+        return "No training data yet. Save some corrections first!"
+
+    with open(LABELS_FILE) as f:
+        data = json.load(f)
+
+    if len(data) < 5:
+        return f"Need at least 5 training samples. You have {len(data)}. Keep saving corrections!"
+
+    # Run PRO training script
+    train_script = BASE_DIR / "train_florence2_pro.py"
+    if not train_script.exists():
+        return "Training script not found. Please check installation."
+
+    try:
+        result = subprocess.run(
+            [sys.executable, str(train_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(BASE_DIR),
+            timeout=3600  # 1 hour max
+        )
+
+        if result.returncode == 0:
+            return "✅ TRAINING COMPLETE! Restart the app to use the improved model."
+        else:
+            return f"Training error: {result.stderr[:500]}"
+    except subprocess.TimeoutExpired:
+        return "Training timed out after 1 hour."
+    except Exception as e:
+        return f"Training failed: {str(e)}"
+
+
+# =============================================================================
 # CREATE UI
 # =============================================================================
 
@@ -706,7 +844,7 @@ def create_ui():
                         label="Monster Image (Upload or Click to Select)",
                         type="numpy",
                         height=550,
-                        interactive=False,
+                        interactive=True,
                         sources=["upload", "clipboard"]
                     )
 
@@ -870,6 +1008,49 @@ def create_ui():
                     parts_markdown = gr.Markdown("No parts saved yet.")
                     refresh_parts_btn = gr.Button("Refresh Parts List", size="sm")
 
+                with gr.Tab("🧠 Learning"):
+                    gr.Markdown("### Teach the AI Your Way")
+                    gr.Markdown("""
+                    **How it works:**
+                    1. Select a part on the image (click or use Smart Detect)
+                    2. Enter the correct label name below
+                    3. Click 'Save as Training Data'
+                    4. After 5+ corrections, click 'Train Model'
+                    5. Restart the app to use the improved AI!
+                    """)
+
+                    training_status = gr.Textbox(
+                        value=get_training_status(),
+                        label="Training Data Status",
+                        interactive=False
+                    )
+
+                    gr.Markdown("---")
+                    gr.Markdown("#### Save Current Selection")
+                    training_label = gr.Textbox(
+                        label="Part Label",
+                        placeholder="e.g., head, arm_left, tail",
+                        info="What should this part be called?"
+                    )
+                    save_training_btn = gr.Button("💾 Save as Training Data", variant="secondary")
+                    training_save_status = gr.Textbox(label="Save Status", interactive=False)
+
+                    gr.Markdown("---")
+                    gr.Markdown("#### Train Model")
+                    gr.Markdown("*Requires 5+ saved corrections. Training takes 5-30 minutes.*")
+                    train_btn = gr.Button("🚀 Train Model", variant="primary")
+                    training_result = gr.Textbox(label="Training Result", interactive=False, lines=3)
+
+                    gr.Markdown("---")
+                    gr.Markdown("#### Learning Report")
+                    learning_report = gr.Code(
+                        value=generate_learning_report() if LEARNING_AVAILABLE else "Learning metrics not available",
+                        label="Model Learning Progress",
+                        language=None,
+                        lines=8
+                    )
+                    refresh_report_btn = gr.Button("🔄 Refresh Report", size="sm")
+
         # Hidden state
         original_image = gr.State(None)
 
@@ -923,6 +1104,26 @@ def create_ui():
 
         # Export
         export_btn.click(fn=export_rig, inputs=[monster_name, export_format], outputs=[export_status, download_file])
+
+        # Learning Tab
+        save_training_btn.click(
+            fn=save_current_as_training,
+            inputs=[training_label],
+            outputs=[training_save_status]
+        ).then(
+            fn=get_training_status,
+            outputs=[training_status]
+        )
+
+        train_btn.click(
+            fn=train_model_from_ui,
+            outputs=[training_result]
+        )
+
+        refresh_report_btn.click(
+            fn=lambda: generate_learning_report() if LEARNING_AVAILABLE else "Learning metrics not available",
+            outputs=[learning_report]
+        )
 
         # Load preset info on app load
         app.load(fn=lambda: get_preset_info("quadruped"), outputs=[preset_info])
