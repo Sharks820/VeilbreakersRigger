@@ -1352,21 +1352,10 @@ class SpineRigBuilder:
                     }
                 }
 
-        # Build animations
+        # Build animations - use Animation's to_spine_dict() method
         animations = {}
-        for anim in rig.animations:
-            anim_data = {"bones": {}}
-            for bone_name, keyframes in anim.bone_timelines.items():
-                bone_timeline = {}
-                if "rotate" in keyframes:
-                    bone_timeline["rotate"] = keyframes["rotate"]
-                if "translate" in keyframes:
-                    bone_timeline["translate"] = keyframes["translate"]
-                if "scale" in keyframes:
-                    bone_timeline["scale"] = keyframes["scale"]
-                if bone_timeline:
-                    anim_data["bones"][bone_name] = bone_timeline
-            animations[anim.name] = anim_data
+        for anim_name, anim in rig.animations.items():
+            animations[anim_name] = anim.to_spine_dict()
 
         return {
             "skeleton": {
@@ -2162,7 +2151,10 @@ class SpineRigBuilder:
             try:
                 anim = self._create_animation(gen, templates, anim_name, bone_groups, speed_mult)
                 if anim:
-                    rig.animations[anim.name] = anim
+                    # CRITICAL: Use the CONFIG's animation name, not the template's internal name
+                    # This prevents "idle" and "idle_breathe" from colliding
+                    anim.name = anim_name
+                    rig.animations[anim_name] = anim
             except Exception as e:
                 logger.warning(f"Failed to create animation '{anim_name}': {e}")
         
@@ -2331,11 +2323,322 @@ class SpineRigBuilder:
             "spawn": lambda: templates.spawn(gen, "root", groups["all_slots"], 1.0 / speed_mult),
             "victory": lambda: templates.victory(gen, "root", groups["arms_all"][:2], 1.5 / speed_mult),
             "taunt": lambda: templates.taunt(gen, "root", groups["head"], 1.2 / speed_mult),
+
+            # === GENERIC ALIASES ===
+            "idle": lambda: templates.idle_breathe(
+                gen, groups["body"], groups["head"], 2.0 / speed_mult),
+            "attack": lambda: templates.attack_slash(
+                gen, "root", groups["arms_right"][:1] or groups["arms_all"][:1], 0.5 / speed_mult),
+            "attack_basic": lambda: templates.attack_slash(
+                gen, "root", groups["arms_right"][:1] or groups["arms_all"][:1], 0.5 / speed_mult),
+            "hit": lambda: templates.hit_light(
+                gen, "root", groups["all_slots"][:5], 0.3 / speed_mult),
+            "hurt": lambda: templates.hit_light(
+                gen, "root", groups["all_slots"][:5], 0.3 / speed_mult),
+            "death": lambda: templates.death_fall_forward(
+                gen, "root", groups["all_slots"], 1.0 / speed_mult),
+            "die": lambda: templates.death_fall_forward(
+                gen, "root", groups["all_slots"], 1.0 / speed_mult),
+
+            # === MELEE COMBAT ===
+            "rending_strike": lambda: templates.attack_slash(
+                gen, "root", groups["arms_right"][:1] or groups["arms_all"][:1], 0.4 / speed_mult),
+            "shield_bash": lambda: templates.attack_thrust(
+                gen, "root", groups["arms_left"][:1] or groups["arms_all"][:1], 0.35 / speed_mult),
+            "execute": lambda: templates.attack_overhead(
+                gen, "root", groups["arms_all"][:2], 0.8 / speed_mult),
+            "attack_heavy": lambda: templates.attack_overhead(
+                gen, "root", groups["arms_all"][:2], 0.7 / speed_mult),
+            "claw_swipe": lambda: templates.attack_slash(
+                gen, "root", groups["arms_all"][:2], 0.4 / speed_mult),
+            "bite": lambda: templates.attack_bite(
+                gen, "root", groups["head"],
+                next((bone.name for bone in gen.rig.bones if "jaw" in bone.name.lower()), ""),
+                0.5 / speed_mult),
+            "pounce": lambda: templates.attack_pounce(
+                gen, "root", groups["legs_front"] or groups["legs_all"], 0.8 / speed_mult),
+            "howl": lambda: templates.special_roar(
+                gen, "root", groups["head"],
+                next((bone.name for bone in gen.rig.bones if "jaw" in bone.name.lower()), ""),
+                1.5 / speed_mult),
+
+            # === RAGE/FRENZY ===
+            "frenzy": lambda: templates.attack_flurry(
+                gen, "root", [groups["arms_left"], groups["arms_right"]], 1.0 / speed_mult),
+            "apex_fury": lambda: templates.attack_flurry(
+                gen, "root", [groups["arms_left"], groups["arms_right"]], 0.8 / speed_mult),
+            "berserk": lambda: templates.attack_flurry(
+                gen, "root", [groups["arms_left"], groups["arms_right"]], 0.9 / speed_mult),
+
+            # === DEFENSIVE ===
+            "defend": lambda: templates.idle_combat(
+                gen, "root", groups["arms_all"], 2.0 / speed_mult),
+            "block": lambda: templates.idle_combat(
+                gen, "root", groups["arms_left"][:1] or groups["arms_all"][:1], 0.3 / speed_mult),
+            "fortress_stance": lambda: templates.idle_combat(
+                gen, "root", groups["arms_all"], 2.5 / speed_mult),
+            "iron_wall": lambda: templates.idle_combat(
+                gen, "root", groups["arms_all"], 2.0 / speed_mult),
+            "cover_ally": lambda: templates.idle_combat(
+                gen, "root", groups["arms_all"], 1.5 / speed_mult),
+            "dodge": lambda: templates.hit_light(
+                gen, "root", [], 0.25 / speed_mult),
+
+            # === SPELLCASTING ===
+            "cast_heal": lambda: templates.special_charge(
+                gen, "root", groups["arms_all"][:2], 1.2 / speed_mult),
+            "siphon_heal": lambda: templates.special_charge(
+                gen, "root", groups["arms_right"][:1] or groups["arms_all"][:1], 1.0 / speed_mult),
+            "life_tap": lambda: templates.special_release(
+                gen, "root", groups["arms_all"][:1], 0.6 / speed_mult),
+            "essence_transfer": lambda: templates.special_charge(
+                gen, "root", groups["arms_all"][:2], 1.5 / speed_mult),
+            "cast_buff": lambda: templates.special_charge(
+                gen, "root", groups["arms_all"][:2], 1.0 / speed_mult),
+            "last_bastion": lambda: templates.special_release(
+                gen, "root", groups["all_slots"][:3], 1.5 / speed_mult),
+            "cast_debuff": lambda: templates.special_charge(
+                gen, "root", groups["arms_right"][:1] or groups["arms_all"][:1], 0.8 / speed_mult),
+            "fear_touch": lambda: templates.attack_thrust(
+                gen, "root", groups["arms_right"][:1] or groups["arms_all"][:1], 0.5 / speed_mult),
+            "nightmare": lambda: templates.special_charge(
+                gen, "root", groups["head"], 2.0 / speed_mult),
+            "cast_spell": lambda: templates.special_charge(
+                gen, "root", groups["arms_all"][:2], 1.2 / speed_mult),
+            "channel": lambda: templates.special_charge(
+                gen, "root", groups["arms_all"][:2], 3.0 / speed_mult),
+
+            # === MOVEMENT VARIANTS ===
+            "jump": lambda: templates.attack_pounce(
+                gen, "root", groups["legs_all"], 0.6 / speed_mult),
+            "trot": lambda: templates.walk_bipedal(
+                gen, "root", groups["legs_left"], groups["legs_right"],
+                groups["arms_left"], groups["arms_right"], 0.7 / speed_mult),
+            "fly": lambda: templates.idle_float(gen, "root", 1.5 / speed_mult),
+            "swim": lambda: templates.slither(gen, groups["body"] + groups["tail"], 1.2 / speed_mult),
+            "burrow": lambda: templates.slither(gen, groups["body"], 1.5 / speed_mult),
+            "hover": lambda: templates.idle_float(gen, "root", 2.0 / speed_mult),
+            "glide": lambda: templates.idle_float(gen, "root", 3.0 / speed_mult),
+            "dash": lambda: templates.run_bipedal(
+                gen, "root", groups["legs_left"], groups["legs_right"],
+                groups["arms_left"], groups["arms_right"], 0.3 / speed_mult),
+            "teleport": lambda: templates.death_dissolve(
+                gen, "root", groups["all_slots"], 0.5 / speed_mult),
+            "phase": lambda: templates.death_dissolve(
+                gen, "root", groups["all_slots"], 0.8 / speed_mult),
+
+            # === QUADRUPED/BEAST ===
+            "walk_quadruped": lambda: templates.walk_quadruped(
+                gen, "root", groups["legs_front"][:1], groups["legs_front"][1:2],
+                groups["legs_back"][:1], groups["legs_back"][1:2], 0.8 / speed_mult),
+            "gallop": lambda: templates.run_bipedal(
+                gen, "root", groups["legs_front"], groups["legs_back"],
+                [], [], 0.4 / speed_mult),
+            "rear_up": lambda: templates.attack_pounce(
+                gen, "root", groups["legs_back"], 1.0 / speed_mult),
+            "tail_whip": lambda: templates.attack_tail_sweep(
+                gen, "root", groups["tail"], 0.5 / speed_mult),
+
+            # === SERPENT/WORM ===
+            "coil": lambda: templates.slither(gen, groups["body"] + groups["tail"], 1.5 / speed_mult),
+            "strike": lambda: templates.attack_bite(
+                gen, "root", groups["head"], "", 0.3 / speed_mult),
+            "constrict": lambda: templates.slither(gen, groups["body"], 2.0 / speed_mult),
+
+            # === FLYING ===
+            "wing_flap": lambda: templates.idle_float(gen, "root", 0.8 / speed_mult),
+            "dive": lambda: templates.attack_pounce(gen, "root", groups["wings"], 0.6 / speed_mult),
+            "swoop": lambda: templates.attack_pounce(gen, "root", groups["wings"], 0.8 / speed_mult),
+            "land": lambda: templates.spawn(gen, "root", groups["all_slots"], 0.8 / speed_mult),
+            "take_off": lambda: templates.victory(gen, "root", groups["wings"], 1.0 / speed_mult),
+
+            # === AQUATIC ===
+            "splash": lambda: templates.special_release(gen, "root", groups["all_slots"], 0.6 / speed_mult),
+            "bubble": lambda: templates.special_charge(gen, "root", groups["head"], 1.0 / speed_mult),
+            "jet": lambda: templates.attack_beam(gen, "root", groups["body"], 0.8 / speed_mult),
+
+            # === ELDRITCH/COSMIC ===
+            "warp": lambda: templates.special_transform(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "void_blast": lambda: templates.attack_beam(gen, "root", groups["arms_all"][:1], 1.2 / speed_mult),
+            "reality_tear": lambda: templates.special_release(gen, "root", groups["all_slots"], 1.0 / speed_mult),
+            "mind_blast": lambda: templates.special_release(gen, "root", groups["head"], 0.8 / speed_mult),
+            "tentacle_lash": lambda: templates.attack_slash(gen, "root", groups["tentacles"][:2], 0.5 / speed_mult),
+            "consume": lambda: templates.attack_bite(
+                gen, "root", groups["head"], "", 1.5 / speed_mult),
+            "possess": lambda: templates.special_charge(gen, "root", groups["head"], 2.0 / speed_mult),
+            "haunt": lambda: templates.idle_float(gen, "root", 3.0 / speed_mult),
+            "manifest": lambda: templates.spawn(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "vanish": lambda: templates.death_dissolve(gen, "root", groups["all_slots"], 0.8 / speed_mult),
+
+            # === UNDEAD ===
+            "rise": lambda: templates.spawn(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "drain": lambda: templates.special_charge(gen, "root", groups["arms_all"][:1], 1.5 / speed_mult),
+            "curse": lambda: templates.special_release(gen, "root", groups["head"], 1.0 / speed_mult),
+            "summon": lambda: templates.special_charge(gen, "root", groups["arms_all"], 2.0 / speed_mult),
+            "bone_throw": lambda: templates.attack_thrust(gen, "root", groups["arms_right"][:1], 0.4 / speed_mult),
+            "reassemble": lambda: templates.spawn(gen, "root", groups["all_slots"], 2.5 / speed_mult),
+            "detach": lambda: templates.death_explode(gen, "root", groups["all_slots"], 0.6 / speed_mult),
+
+            # === ELEMENTAL ===
+            "elemental_burst": lambda: templates.special_release(gen, "root", groups["all_slots"], 0.8 / speed_mult),
+            "absorb": lambda: templates.special_charge(gen, "root", groups["body"], 1.5 / speed_mult),
+            "radiate": lambda: templates.idle_float(gen, "root", 2.0 / speed_mult),
+            "engulf": lambda: templates.attack_pounce(gen, "root", groups["body"], 1.0 / speed_mult),
+
+            # === SLIME/OOZE ===
+            "split": lambda: templates.death_explode(gen, "root", groups["all_slots"], 1.0 / speed_mult),
+            "merge": lambda: templates.spawn(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "dissolve": lambda: templates.death_dissolve(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "reform": lambda: templates.spawn(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "engulf_attack": lambda: templates.attack_pounce(gen, "root", groups["body"], 1.2 / speed_mult),
+            "acid_spit": lambda: templates.attack_beam(gen, "root", groups["head"], 0.8 / speed_mult),
+
+            # === INSECT ===
+            "mandible_snap": lambda: templates.attack_bite(gen, "root", groups["head"], "", 0.3 / speed_mult),
+            "sting": lambda: templates.attack_thrust(gen, "root", groups["tail"], 0.4 / speed_mult),
+            "web_spray": lambda: templates.attack_beam(gen, "root", groups["body"], 1.0 / speed_mult),
+            "molt": lambda: templates.special_transform(gen, "root", groups["all_slots"], 3.0 / speed_mult),
+            "swarm_call": lambda: templates.special_roar(gen, "root", groups["head"], "", 1.5 / speed_mult),
+
+            # === MECHANICAL/CONSTRUCT ===
+            "activate": lambda: templates.spawn(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "deactivate": lambda: templates.death_collapse(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "overdrive": lambda: templates.special_charge(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "repair": lambda: templates.spawn(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "laser": lambda: templates.attack_beam(gen, "root", groups["head"], 1.0 / speed_mult),
+            "missile": lambda: templates.attack_thrust(gen, "root", groups["arms_all"][:1], 0.6 / speed_mult),
+
+            # === PLANT/TREANT ===
+            "root_slam": lambda: templates.attack_overhead(gen, "root", groups["arms_all"], 0.8 / speed_mult),
+            "vine_whip": lambda: templates.attack_slash(gen, "root", groups["arms_all"], 0.5 / speed_mult),
+            "spore_cloud": lambda: templates.special_release(gen, "root", groups["head"], 1.0 / speed_mult),
+            "bloom": lambda: templates.spawn(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "wither": lambda: templates.death_dissolve(gen, "root", groups["all_slots"], 2.5 / speed_mult),
+
+            # === CRYSTALLINE ===
+            "shatter": lambda: templates.death_explode(gen, "root", groups["all_slots"], 0.6 / speed_mult),
+            "reflect": lambda: templates.hit_light(gen, "root", [], 0.3 / speed_mult),
+            "refract": lambda: templates.special_release(gen, "root", groups["body"], 0.8 / speed_mult),
+            "grow": lambda: templates.spawn(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+
+            # === DEMON/ANGEL ===
+            "hellfire": lambda: templates.attack_beam(gen, "root", groups["arms_all"][:1], 1.2 / speed_mult),
+            "dark_aura": lambda: templates.idle_float(gen, "root", 2.5 / speed_mult),
+            "divine_light": lambda: templates.special_release(gen, "root", groups["body"], 1.5 / speed_mult),
+            "smite": lambda: templates.attack_overhead(gen, "root", groups["arms_all"], 0.6 / speed_mult),
+            "blessing": lambda: templates.special_charge(gen, "root", groups["arms_all"], 1.5 / speed_mult),
+            "judgment": lambda: templates.attack_beam(gen, "root", groups["head"], 1.0 / speed_mult),
+
+            # === MULTI-HEADED ===
+            "multi_bite": lambda: templates.attack_flurry(
+                gen, "root", [[h] for h in groups["head"]], 0.8 / speed_mult),
+            "heads_argue": lambda: templates.idle_menace(gen, "root", groups["head"], 3.0 / speed_mult),
+            "sync_attack": lambda: templates.attack_beam(gen, "root", groups["head"], 1.0 / speed_mult),
+
+            # === MISC ===
+            "roar": lambda: templates.special_roar(
+                gen, "root", groups["head"],
+                next((bone.name for bone in gen.rig.bones if "jaw" in bone.name.lower()), ""),
+                1.2 / speed_mult),
+            "screech": lambda: templates.special_roar(gen, "root", groups["head"], "", 0.8 / speed_mult),
+            "scream": lambda: templates.special_roar(gen, "root", groups["head"], "", 0.8 / speed_mult),
+            "laugh": lambda: templates.special_roar(gen, "root", groups["head"], "", 1.5 / speed_mult),
+            "levitate": lambda: templates.idle_float(gen, "root", 2.0 / speed_mult),
+            "float": lambda: templates.idle_float(gen, "root", 2.5 / speed_mult),
+            "stomp": lambda: templates.attack_pounce(gen, "root", groups["legs_all"], 0.5 / speed_mult),
+            "grab": lambda: templates.attack_thrust(gen, "root", groups["arms_all"][:2], 0.6 / speed_mult),
+            "throw": lambda: templates.attack_overhead(gen, "root", groups["arms_all"][:2], 0.5 / speed_mult),
+            "slam": lambda: templates.attack_overhead(gen, "root", groups["arms_all"], 0.4 / speed_mult),
+            "crush": lambda: templates.attack_overhead(gen, "root", groups["arms_all"], 0.6 / speed_mult),
+
+            # === ADDITIONAL MISSING ANIMATIONS ===
+            # Pain/suffering
+            "absorb_pain": lambda: templates.special_charge(gen, "root", groups["body"], 1.5 / speed_mult),
+            "absorb_suffering": lambda: templates.special_charge(gen, "root", groups["body"], 2.0 / speed_mult),
+            "consume_the_weak": lambda: templates.attack_bite(gen, "root", groups["head"], "", 1.5 / speed_mult),
+            "drown_in_despair": lambda: templates.special_charge(gen, "root", groups["head"], 2.5 / speed_mult),
+            "dread_gaze": lambda: templates.special_charge(gen, "root", groups["head"], 1.5 / speed_mult),
+            "mass_drain": lambda: templates.special_charge(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "mass_confusion": lambda: templates.special_release(gen, "root", groups["head"], 1.5 / speed_mult),
+
+            # Appear/disappear
+            "appear": lambda: templates.spawn(gen, "root", groups["all_slots"], 0.8 / speed_mult),
+            "dissipate": lambda: templates.death_dissolve(gen, "root", groups["all_slots"], 1.0 / speed_mult),
+            "transform_in": lambda: templates.spawn(gen, "root", groups["all_slots"], 1.0 / speed_mult),
+            "transform_out": lambda: templates.death_dissolve(gen, "root", groups["all_slots"], 1.0 / speed_mult),
+
+            # Movement variants
+            "climb": lambda: templates.walk_bipedal(gen, "root", groups["legs_left"], groups["legs_right"],
+                groups["arms_left"], groups["arms_right"], 1.2 / speed_mult),
+            "crawl": lambda: templates.shamble(gen, "root", groups["arms_all"] + groups["legs_all"], 2.0 / speed_mult),
+            "lurch": lambda: templates.shamble(gen, "root", groups["legs_all"], 1.5 / speed_mult),
+            "prowl": lambda: templates.walk_bipedal(gen, "root", groups["legs_left"], groups["legs_right"],
+                groups["arms_left"], groups["arms_right"], 1.5 / speed_mult),
+            "waddle": lambda: templates.walk_bipedal(gen, "root", groups["legs_left"], groups["legs_right"],
+                [], [], 1.5 / speed_mult),
+            "hop": lambda: templates.attack_pounce(gen, "root", groups["legs_all"], 0.5 / speed_mult),
+            "bounce": lambda: templates.attack_pounce(gen, "root", groups["body"], 0.6 / speed_mult),
+
+            # Vertical movement
+            "ascend": lambda: templates.idle_float(gen, "root", 1.5 / speed_mult),
+            "descend": lambda: templates.death_fall_forward(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "sink": lambda: templates.death_fall_forward(gen, "root", groups["all_slots"], 2.0 / speed_mult),
+            "surface": lambda: templates.spawn(gen, "root", groups["all_slots"], 1.0 / speed_mult),
+            "surge": lambda: templates.attack_pounce(gen, "root", groups["body"], 0.6 / speed_mult),
+
+            # Swimming
+            "swim_fast": lambda: templates.slither(gen, groups["body"] + groups["tail"], 0.6 / speed_mult),
+            "swim_slow": lambda: templates.slither(gen, groups["body"] + groups["tail"], 2.0 / speed_mult),
+            "swim_turn": lambda: templates.slither(gen, groups["body"], 0.8 / speed_mult),
+
+            # Ooze/slime
+            "ooze": lambda: templates.slither(gen, groups["body"], 3.0 / speed_mult),
+            "expand": lambda: templates.spawn(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "contract": lambda: templates.death_collapse(gen, "root", groups["all_slots"], 1.0 / speed_mult),
+            "assimilate": lambda: templates.special_charge(gen, "root", groups["body"], 2.0 / speed_mult),
+
+            # Parasitic
+            "attach": lambda: templates.attack_pounce(gen, "root", groups["body"], 0.5 / speed_mult),
+            "scatter": lambda: templates.death_explode(gen, "root", groups["all_slots"], 0.5 / speed_mult),
+
+            # Plant/treant
+            "root": lambda: templates.spawn(gen, "root", groups["legs_all"], 2.0 / speed_mult),
+            "uproot": lambda: templates.attack_pounce(gen, "root", groups["legs_all"], 1.5 / speed_mult),
+
+            # Eldritch/cosmic
+            "between_seconds": lambda: templates.special_transform(gen, "root", groups["all_slots"], 0.5 / speed_mult),
+            "chorus": lambda: templates.special_roar(gen, "root", groups["head"], "", 2.0 / speed_mult),
+            "chorus_of_names": lambda: templates.special_roar(gen, "root", groups["head"], "", 3.0 / speed_mult),
+            "collective_scream": lambda: templates.special_roar(gen, "root", groups["all_slots"], 1.5 / speed_mult),
+            "reality_shatter": lambda: templates.death_explode(gen, "root", groups["all_slots"], 0.8 / speed_mult),
+            "defined_purpose": lambda: templates.special_charge(gen, "root", groups["body"], 2.0 / speed_mult),
         }
-        
+
         if anim_name in anim_map:
             return anim_map[anim_name]()
-        
+
+        # Fallback: try to create a generic animation based on name keywords
+        name_lower = anim_name.lower()
+        if "idle" in name_lower:
+            return templates.idle_breathe(gen, groups["body"], groups["head"], 2.0 / speed_mult)
+        elif "attack" in name_lower or "strike" in name_lower:
+            return templates.attack_slash(gen, "root", groups["arms_all"][:1], 0.5 / speed_mult)
+        elif "hit" in name_lower or "hurt" in name_lower:
+            return templates.hit_light(gen, "root", groups["all_slots"][:5], 0.3 / speed_mult)
+        elif "death" in name_lower or "die" in name_lower:
+            return templates.death_fall_forward(gen, "root", groups["all_slots"], 1.0 / speed_mult)
+        elif "walk" in name_lower or "move" in name_lower:
+            return self._create_walk_animation(gen, templates, groups, speed_mult)
+        elif "run" in name_lower or "sprint" in name_lower:
+            return templates.run_bipedal(gen, "root", groups["legs_left"], groups["legs_right"],
+                groups["arms_left"], groups["arms_right"], 0.5 / speed_mult)
+        elif "cast" in name_lower or "spell" in name_lower or "magic" in name_lower:
+            return templates.special_charge(gen, "root", groups["arms_all"][:2], 1.2 / speed_mult)
+        elif "block" in name_lower or "defend" in name_lower:
+            return templates.idle_combat(gen, "root", groups["arms_all"], 1.5 / speed_mult)
+        elif "special" in name_lower:
+            return templates.special_charge(gen, "root", groups["all_slots"][:3], 1.5 / speed_mult)
+
         return None
     
     def _create_walk_animation(self, gen: AnimationGenerator, templates,
