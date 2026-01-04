@@ -304,10 +304,13 @@ def add_missing_part(part_name: str):
         return create_visualization(), f"Error adding part: {e}", get_parts_summary()
 
 
-def export_rig(monster_name: str, archetype: str):
-    """Build skeleton, generate animations, export everything"""
+def export_rig(monster_name: str, archetype: str, selected_animations: list):
+    """Build skeleton, generate ONLY selected animations, export everything"""
     if STATE.rigger is None or len(STATE.rigger.get_parts()) == 0:
         return "⚠️ No parts detected! Run Smart Scan first.", None
+
+    if not selected_animations:
+        return "⚠️ No animations selected! Check at least one animation.", None
 
     if not monster_name or not monster_name.strip():
         monster_name = "monster"
@@ -345,11 +348,16 @@ def export_rig(monster_name: str, archetype: str):
                 has_wings=has_wings
             )
 
+            # FILTER TO ONLY SELECTED ANIMATIONS
+            all_anims = spine_data.get('animations', {})
+            filtered_anims = {name: data for name, data in all_anims.items() if name in selected_animations}
+            spine_data['animations'] = filtered_anims
+
             # Count what we built
             bone_count = len(spine_data.get('bones', []))
             slot_count = len(spine_data.get('slots', []))
-            anim_count = len(spine_data.get('animations', {}))
-            anim_names = list(spine_data.get('animations', {}).keys())
+            anim_count = len(filtered_anims)
+            anim_names = list(filtered_anims.keys())
 
             # Save Spine JSON
             output_path = temp_dir / f"{monster_name}_spine.json"
@@ -412,35 +420,26 @@ def clear_all():
     return create_visualization(), "Cleared. Upload a new image to start.", ""
 
 
-def get_archetype_preview(archetype: str) -> str:
-    """Show ALL animations that will be generated for this archetype"""
+def get_archetype_animations(archetype: str) -> list:
+    """Get list of available animations for this archetype"""
     if not ANIMATION_AVAILABLE:
-        return "Animation system not loaded"
+        return ["idle", "walk", "run", "attack", "hurt", "die"]
 
     arch_key = ARCHETYPE_MAP.get(archetype, "humanoid")
 
-    # Get the config for this archetype
     try:
         from spine_rig_builder import ARCHETYPE_CONFIGS
         config = ARCHETYPE_CONFIGS.get(arch_key, {})
         anims = config.get("animations", [])
+        return anims if anims else ["idle", "walk", "run", "attack", "hurt", "die"]
+    except:
+        return ["idle", "walk", "run", "attack", "hurt", "die"]
 
-        if not anims:
-            return f"idle, walk, run, attack, hurt, die"
 
-        # Show ALL animations in a readable format
-        # Group them for clarity
-        lines = []
-
-        # Just list them all, comma separated
-        anim_list = ", ".join(anims)
-        lines.append(f"{anim_list}")
-        lines.append(f"")
-        lines.append(f"**Total: {len(anims)} animations**")
-
-        return "\n".join(lines)
-    except Exception as e:
-        return f"idle, walk, run, attack, hurt, die"
+def update_animation_choices(archetype: str):
+    """Update the animation checkboxes when archetype changes"""
+    anims = get_archetype_animations(archetype)
+    return gr.update(choices=anims, value=anims)  # Default: all selected
 
 
 # =============================================================================
@@ -505,7 +504,6 @@ def create_ui():
 
                 # RIG & ANIMATE - Make it OBVIOUS this is where the magic happens
                 gr.Markdown("## 🦴 RIG & ANIMATE")
-                gr.Markdown("**Pick creature type → Get ALL animations for that type!**")
 
                 monster_name = gr.Textbox(label="Monster Name", placeholder="my_monster")
                 archetype = gr.Dropdown(
@@ -514,9 +512,19 @@ def create_ui():
                     label="Creature Type"
                 )
 
-                # Show what animations will be generated
-                gr.Markdown("**Animations you'll get:**")
-                anim_preview = gr.Markdown("*Select creature type above*")
+                # Let user SELECT which animations they want
+                gr.Markdown("**Select animations you want:**")
+                default_anims = get_archetype_animations(ARCHETYPES[0] if ARCHETYPES else "Humanoid")
+                anim_checkboxes = gr.CheckboxGroup(
+                    choices=default_anims,
+                    value=default_anims,  # All selected by default
+                    label="Animations",
+                    info="Uncheck any you don't need"
+                )
+
+                with gr.Row():
+                    select_all_btn = gr.Button("Select All", size="sm")
+                    select_none_btn = gr.Button("Select None", size="sm")
 
                 export_btn = gr.Button("🎬 BUILD RIG + ANIMATIONS", variant="primary", size="lg")
                 export_status = gr.Textbox(label="Build Status", interactive=False, lines=3)
@@ -551,24 +559,35 @@ def create_ui():
             outputs=[main_image, status, parts_display]
         )
 
-        # Archetype selection shows what animations you'll get
+        # Archetype selection updates available animations
         archetype.change(
-            fn=get_archetype_preview,
+            fn=update_animation_choices,
             inputs=[archetype],
-            outputs=[anim_preview]
+            outputs=[anim_checkboxes]
         )
 
-        # BUILD RIG + ANIMATIONS
+        # Select All / Select None buttons
+        select_all_btn.click(
+            fn=lambda arch: gr.update(value=get_archetype_animations(arch)),
+            inputs=[archetype],
+            outputs=[anim_checkboxes]
+        )
+        select_none_btn.click(
+            fn=lambda: gr.update(value=[]),
+            outputs=[anim_checkboxes]
+        )
+
+        # BUILD RIG + ANIMATIONS (with selected animations)
         export_btn.click(
             fn=export_rig,
-            inputs=[monster_name, archetype],
+            inputs=[monster_name, archetype, anim_checkboxes],
             outputs=[export_status, download]
         )
 
-        # Startup - show initial archetype preview
+        # Startup
         app.load(
-            fn=lambda: ("Ready! Upload an image and click 'Smart Scan'", get_archetype_preview(ARCHETYPES[0] if ARCHETYPES else "Humanoid")),
-            outputs=[status, anim_preview]
+            fn=lambda: "Ready! Upload an image and click 'Smart Scan'",
+            outputs=[status]
         )
 
     return app
