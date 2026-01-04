@@ -215,7 +215,7 @@ def load_and_scan(image):
             np_image = np.array(image)
 
         STATE.original_image = np_image.copy()
-        STATE.rigger.load_image(np_image)
+        STATE.rigger.load_image_array(np_image)
 
         # Pre-load models if not done
         if not STATE.models_loaded:
