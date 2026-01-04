@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""VEILBREAKERS Monster Rigger - Launcher v4.0"""
+"""VEILBREAKERS Monster Rigger - Launcher v5.0"""
 import sys
 
 print("=" * 60)
-print("    VEILBREAKERS MONSTER RIGGER v4.0 (UNIFIED)")
-print("    Powered by Florence-2 PRO")
+print("    VEILBREAKERS MONSTER RIGGER v5.0 (SIMPLIFIED)")
+print("    Drop → Scan → Add Missing → Export")
 print("=" * 60)
 print()
 
