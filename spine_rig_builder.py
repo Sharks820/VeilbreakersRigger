@@ -1188,13 +1188,199 @@ class SpineRigBuilder:
         
         # Export
         output_path = self._export(rig, image_path)
-        
+
         logger.info(f"✅ Rig complete: {output_path}")
         logger.info(f"   Bones: {len(rig.bones)}")
         logger.info(f"   Animations: {len(rig.animations)}")
-        
+
         return output_path
-    
+
+    def build_rig(self,
+                  parts: list,
+                  archetype: str = "humanoid",
+                  rig_name: str = "monster",
+                  arm_count: int = 2,
+                  leg_count: int = 2,
+                  has_tail: bool = False,
+                  has_wings: bool = False,
+                  has_hair: bool = False,
+                  has_cape: bool = False,
+                  tentacle_count: int = 0,
+                  animation_speed: float = 1.0) -> dict:
+        """
+        Build a Spine rig from pre-detected parts (called from UI).
+
+        Args:
+            parts: List of BodyPart objects from the rigger
+            archetype: Creature type
+            rig_name: Name for the rig
+            arm_count: Number of arms
+            leg_count: Number of legs
+            has_tail: Include tail
+            has_wings: Include wings
+            has_hair: Include hair physics
+            has_cape: Include cape physics
+            tentacle_count: Number of tentacles
+            animation_speed: Speed multiplier
+
+        Returns:
+            Spine JSON data as dict (ready to save)
+        """
+        # Parse archetype
+        arch_enum = self._parse_archetype(archetype)
+        config = ARCHETYPE_CONFIGS.get(arch_enum, ARCHETYPE_CONFIGS[CreatureArchetype.HUMANOID])
+
+        logger.info(f"Building rig from {len(parts)} parts: {rig_name} ({config['name']})")
+
+        # Get dimensions from parts
+        width, height = 512, 512  # Default
+        for part in parts:
+            if hasattr(part, 'image') and part.image is not None:
+                h, w = part.image.shape[:2]
+                width = max(width, w)
+                height = max(height, h)
+            elif hasattr(part, 'mask') and part.mask is not None:
+                h, w = part.mask.shape[:2]
+                width = max(width, w)
+                height = max(height, h)
+
+        # Create rig structure
+        rig = CreatureRig(
+            name=rig_name,
+            archetype=arch_enum,
+            width=width,
+            height=height
+        )
+
+        # Add root bone at center-bottom
+        rig.bones.append(Bone(
+            name="root",
+            x=width / 2,
+            y=height * 0.1,
+            length=0,
+            color="00FF00FF"
+        ))
+
+        # Convert parts to parts_data format
+        parts_data = {}
+        for part in parts:
+            part_name = part.name.lower()
+
+            # Get bounding box
+            bbox = None
+            if hasattr(part, 'bbox') and part.bbox:
+                bbox = (part.bbox.x1, part.bbox.y1, part.bbox.x2, part.bbox.y2)
+            elif hasattr(part, 'bounds') and part.bounds:
+                bbox = part.bounds
+            elif hasattr(part, 'mask') and part.mask is not None:
+                ys, xs = np.where(part.mask > 0)
+                if len(xs) > 0:
+                    bbox = (int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max()))
+
+            if bbox:
+                x1, y1, x2, y2 = bbox
+                cx = (x1 + x2) / 2
+                cy = (y1 + y2) / 2
+
+                parts_data[part_name] = {
+                    "name": part_name,
+                    "bbox": bbox,
+                    "center": (cx, cy),
+                    "width": x2 - x1,
+                    "height": y2 - y1,
+                    "z_index": getattr(part, 'z_index', 0)
+                }
+
+        # Build skeleton
+        self._build_skeleton(rig, parts_data, config, arm_count, leg_count,
+                            has_tail, has_wings, has_hair, has_cape, tentacle_count)
+
+        # Create slots
+        self._create_slots(rig, parts_data)
+
+        # Generate animations
+        speed_mult = config.get("animation_speed_mult", 1.0) * animation_speed
+        self._generate_animations(rig, config, speed_mult)
+
+        # Add events
+        self._add_events(rig)
+
+        # Convert to Spine JSON format
+        spine_data = self._to_spine_json(rig)
+
+        logger.info(f"✅ Rig built: {len(rig.bones)} bones, {len(rig.animations)} animations")
+
+        return spine_data
+
+    def _to_spine_json(self, rig: 'CreatureRig') -> dict:
+        """Convert CreatureRig to Spine JSON format"""
+        # Build bones array
+        bones = []
+        for bone in rig.bones:
+            bone_data = {
+                "name": bone.name,
+                "x": bone.x,
+                "y": bone.y,
+                "length": bone.length,
+                "rotation": bone.rotation
+            }
+            if bone.parent:
+                bone_data["parent"] = bone.parent
+            if bone.color:
+                bone_data["color"] = bone.color
+            bones.append(bone_data)
+
+        # Build slots array
+        slots = []
+        for slot in rig.slots:
+            slot_data = {
+                "name": slot.name,
+                "bone": slot.bone,
+                "attachment": slot.attachment
+            }
+            slots.append(slot_data)
+
+        # Build skins
+        skin_attachments = {}
+        for slot in rig.slots:
+            if slot.attachment:
+                skin_attachments[slot.name] = {
+                    slot.attachment: {
+                        "type": "region",
+                        "width": 100,
+                        "height": 100
+                    }
+                }
+
+        # Build animations
+        animations = {}
+        for anim in rig.animations:
+            anim_data = {"bones": {}}
+            for bone_name, keyframes in anim.bone_timelines.items():
+                bone_timeline = {}
+                if "rotate" in keyframes:
+                    bone_timeline["rotate"] = keyframes["rotate"]
+                if "translate" in keyframes:
+                    bone_timeline["translate"] = keyframes["translate"]
+                if "scale" in keyframes:
+                    bone_timeline["scale"] = keyframes["scale"]
+                if bone_timeline:
+                    anim_data["bones"][bone_name] = bone_timeline
+            animations[anim.name] = anim_data
+
+        return {
+            "skeleton": {
+                "hash": rig.name,
+                "spine": "4.1",
+                "width": rig.width,
+                "height": rig.height
+            },
+            "bones": bones,
+            "slots": slots,
+            "skins": [{"name": "default", "attachments": skin_attachments}],
+            "animations": animations
+        }
+
     def _parse_archetype(self, archetype: str) -> CreatureArchetype:
         """Parse archetype string to enum - supports all 39 creature types"""
         arch_map = {
