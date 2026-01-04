@@ -948,7 +948,7 @@ class AnimationGenerator:
         for i in range(keyframe_count + 1):
             t = (i / keyframe_count) * duration
             value = math.sin((t * frequency * 2 * math.pi) + phase) * amplitude
-            curve = "linear" if i < keyframe_count else "linear"
+            curve = "linear"  # Consistent easing for sine wave
             keyframes.append((t, value, curve))
         return keyframes
     
@@ -960,7 +960,7 @@ class AnimationGenerator:
         current_time = start_time
         bounce_duration = duration / (bounces * 2)
         
-        for i in range(bounces):
+        for _ in range(bounces):
             # Down
             keyframes.append((current_time, 0, "pow2in"))
             current_time += bounce_duration

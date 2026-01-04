@@ -24,7 +24,7 @@ for mod, name in [("sam2", "SAM2"), ("groundingdino", "GroundingDINO"), ("simple
     try:
         __import__(mod)
         print(f"  [OK] {name}")
-    except:
+    except ImportError:
         print(f"  [--] {name} (optional)")
 
 print()

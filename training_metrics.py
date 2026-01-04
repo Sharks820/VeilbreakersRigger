@@ -359,7 +359,7 @@ def get_training_data_stats() -> Dict:
     try:
         with open(labels_file) as f:
             data = json.load(f)
-    except:
+    except (OSError, json.JSONDecodeError):
         return {"total_samples": 0, "error": "Failed to read labels file"}
 
     total_boxes = 0

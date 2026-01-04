@@ -41,6 +41,20 @@ IMAGES_DIR = TRAINING_DIR / "images"
 LABELS_FILE = TRAINING_DIR / "labels.json"
 
 # =============================================================================
+# CONSTANTS - Avoid duplicated string literals (SonarQube S1192)
+# =============================================================================
+MSG_LOAD_IMAGE_FIRST = "Load an image first"
+MSG_NO_PARTS = "No parts detected"
+INPAINT_FAST = "Fast (OpenCV)"
+INPAINT_STANDARD = "Standard (LaMa)"
+INPAINT_HIGH = "High (LaMa x2)"
+INPAINT_ULTRA = "Ultra (Stable Diffusion)"
+INPAINT_CHOICES = [INPAINT_FAST, INPAINT_STANDARD, INPAINT_HIGH, INPAINT_ULTRA]
+
+# Will be populated after InpaintQuality import
+INPAINT_QUALITY_MAP = None
+
+# =============================================================================
 # GRACEFUL DEGRADATION
 # =============================================================================
 RIGGER_AVAILABLE = True
@@ -56,6 +70,15 @@ try:
 except Exception as e:
     RIGGER_AVAILABLE = False
     print(f"WARNING: Could not import VeilbreakersRigger: {e}")
+
+# Initialize quality map after import
+if RIGGER_AVAILABLE:
+    INPAINT_QUALITY_MAP = {
+        INPAINT_FAST: InpaintQuality.FAST,
+        INPAINT_STANDARD: InpaintQuality.STANDARD,
+        INPAINT_HIGH: InpaintQuality.HIGH,
+        INPAINT_ULTRA: InpaintQuality.ULTRA
+    }
 
 # Animation system
 ANIMATION_AVAILABLE = True
@@ -114,7 +137,7 @@ class AppState:
                     use_fallback=True
                 )
                 return True
-            except:
+            except Exception:
                 return False
 
     def preload_models(self):
@@ -258,7 +281,7 @@ def load_image(image, sam_size: str):
 def on_image_click(image, evt: gr.SelectData, mode: str, box_mode: bool):
     """Handle click on image - supports regular click and box mode"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, "Load an image first!"
+        return None, MSG_LOAD_IMAGE_FIRST
 
     x, y = evt.index
 
@@ -366,7 +389,7 @@ def smart_detect_parts(image, prompt: str, threshold: float):
 def auto_detect(prompt: str, box_thresh: float, text_thresh: float, quality: str):
     """Auto-detect parts from text prompt (Grounding DINO)"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, "Load an image first!", [], gr.update(choices=[""])
+        return None, MSG_LOAD_IMAGE_FIRST, [], gr.update(choices=[""])
 
     if not prompt:
         return None, "Enter a detection prompt!", [], gr.update(choices=[""])
@@ -409,7 +432,7 @@ def auto_detect(prompt: str, box_thresh: float, text_thresh: float, quality: str
 def redetect_single_part(part_prompt: str, threshold: float):
     """Re-detect a single part with custom settings"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, "Load an image first"
+        return None, MSG_LOAD_IMAGE_FIRST
 
     if not STATE.models_loaded:
         return None, "AI models still loading..."
@@ -459,7 +482,7 @@ def redetect_single_part(part_prompt: str, threshold: float):
 def segment_everything():
     """Find all segments in the image automatically"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, "Load an image first", 0, 0
+        return None, MSG_LOAD_IMAGE_FIRST, 0, 0
 
     try:
         print("Finding all segments...")
@@ -611,7 +634,7 @@ def get_preset_info(preset_name: str) -> str:
 def apply_preset(preset_name: str, quality: str):
     """Apply a body preset"""
     if STATE.rigger is None or STATE.rigger.current_rig is None:
-        return None, "Load an image first!", [], gr.update(choices=[""])
+        return None, MSG_LOAD_IMAGE_FIRST, [], gr.update(choices=[""])
 
     quality_map = {
         "Fast (OpenCV)": InpaintQuality.FAST,
@@ -799,7 +822,7 @@ def generate_animated_rig(
                 spine_data = json.load(f)
             anim_count = len(spine_data.get('animations', {}))
             bone_count = len(spine_data.get('bones', []))
-        except:
+        except (OSError, json.JSONDecodeError):
             anim_count = 0
             bone_count = 0
 

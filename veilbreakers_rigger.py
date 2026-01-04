@@ -339,7 +339,7 @@ class BodyPart:
     
     def get_mask_center(self) -> Tuple[int, int]:
         """Get center of mass of mask"""
-        coords = np.where(self.mask > 0)
+        coords = np.nonzero(self.mask > 0)
         if len(coords[0]) == 0:
             return (0, 0)
         return (int(np.mean(coords[1])), int(np.mean(coords[0])))
@@ -534,7 +534,7 @@ class GroundedSAM2Engine(SegmentationEngine):
                 elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
                     logger.info("Apple MPS available")
                     return "mps"
-            except:
+            except Exception:
                 pass
             return "cpu"
         return device
@@ -843,7 +843,7 @@ class GroundedSAM2Engine(SegmentationEngine):
                         continue
 
                     # Check if we've seen this region (by center of mass)
-                    coords = np.where(mask > 0)
+                    coords = np.nonzero(mask > 0)
                     if len(coords[0]) > 0:
                         cy, cx = int(np.mean(coords[0])), int(np.mean(coords[1]))
                         center_key = (cy // 50, cx // 50)  # Grid quantization
@@ -852,11 +852,11 @@ class GroundedSAM2Engine(SegmentationEngine):
                         seen_centers.add(center_key)
 
                     # Get bounding box
-                    ys, xs = np.where(mask > 0)
+                    ys, xs = np.nonzero(mask > 0)
                     bbox = (xs.min(), ys.min(), xs.max(), ys.max())
 
                     results.append((mask, 0.9, bbox))
-                except:
+                except Exception:
                     continue
 
         results.sort(key=lambda x: (x[0] > 0).sum(), reverse=True)
@@ -1542,8 +1542,8 @@ class PartExtractor:
         if not np.any(rows) or not np.any(cols):
             raise ValueError(f"Empty mask for part: {name}")
         
-        y_indices = np.where(rows)[0]
-        x_indices = np.where(cols)[0]
+        y_indices = np.nonzero(rows)[0]
+        x_indices = np.nonzero(cols)[0]
         
         y_min, y_max = y_indices[0], y_indices[-1]
         x_min, x_max = x_indices[0], x_indices[-1]

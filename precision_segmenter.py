@@ -412,8 +412,8 @@ class PrecisionSegmenter:
         if not np.any(rows) or not np.any(cols):
             return None
         
-        y1, y2 = np.where(rows)[0][[0, -1]]
-        x1, x2 = np.where(cols)[0][[0, -1]]
+        y1, y2 = np.nonzero(rows)[0][[0, -1]]
+        x1, x2 = np.nonzero(cols)[0][[0, -1]]
         
         # Add small padding
         pad = 2

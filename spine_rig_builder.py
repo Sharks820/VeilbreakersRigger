@@ -665,8 +665,8 @@ class SpineRigBuilder:
                     cols = np.any(alpha > 10, axis=0)
                     
                     if np.any(rows) and np.any(cols):
-                        row_min, row_max = np.where(rows)[0][[0, -1]]
-                        col_min, col_max = np.where(cols)[0][[0, -1]]
+                        row_min, row_max = np.nonzero(rows)[0][[0, -1]]
+                        col_min, col_max = np.nonzero(cols)[0][[0, -1]]
                         
                         # Crop to actual content
                         part_img = part_img.crop((col_min, row_min, col_max + 1, row_max + 1))
