@@ -119,6 +119,14 @@ Old/test files moved to `archive/` instead of deleted.
 | Needlefang | SERPENT | 13 |
 | Ravener | HUMANOID | 41 |
 
+## Godot Integration Status
+
+⚠️ **SPINE/CUTOUT RIGGING NOT RECOMMENDED FOR GODOT**
+
+Attempted Godot export - animations did not work reliably. Cutout animation in Godot is too complex.
+
+**Recommendation**: Use this tool for Spine JSON export only. For Godot, STICK TO SPRITE SHEETS.
+
 ## Version History
 - v5.3: Veilbreakers monster support + game animation IDs (169 body parts, 213 total animations)
 - v5.2: Animation system integrated into main UI
